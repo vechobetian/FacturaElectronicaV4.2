@@ -141,7 +141,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings1.settings</DependentUpon>
     </Compile>
-    <Compile Include="vecho.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
@@ -190,6 +189,10 @@
     <ProjectReference Include="..\CompE.Negocio\Negocio.vbproj">
       <Project>{6da199d8-678b-4e64-8bed-3c63c7a3bdfb}</Project>
       <Name>Negocio</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Vecho\Vecho.vbproj">
+      <Project>{64975225-97cd-41e5-a829-80b676d79425}</Project>
+      <Name>Vecho</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

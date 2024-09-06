@@ -88,7 +88,6 @@
     <Compile Include="N_AdminEmpresa.vb" />
     <Compile Include="N_AdminLoginTicket.vb" />
     <Compile Include="N_AdminOperaciones.vb" />
-    <Compile Include="vecho.vb" />
     <Compile Include="Web References\WSN\Reference.vb">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -226,6 +225,10 @@
     <ProjectReference Include="..\CompE.Entidades\Entidades.vbproj">
       <Project>{2215aad4-a976-496f-b9f8-87258163c48b}</Project>
       <Name>Entidades</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Vecho\Vecho.vbproj">
+      <Project>{64975225-97cd-41e5-a829-80b676d79425}</Project>
+      <Name>Vecho</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
