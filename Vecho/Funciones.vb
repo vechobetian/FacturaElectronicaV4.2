@@ -1,4 +1,4 @@
-ï»¿Module vecho
+Public Module Funciones
     Public Function NumEnLetras(Numero As String) As String
         Dim b, paso As Integer
         Dim expresion, entero, deci, flag As String
@@ -209,7 +209,7 @@
                 End If
                 If paso = 7 Then
                     If Len(entero) = 7 And Mid(entero, 1, 1) = "1" Then
-                        expresion = expresion & "millÃ³n "
+                        expresion = expresion & "millón "
                     Else
                         expresion = expresion & "millones "
                     End If
@@ -233,13 +233,43 @@
             NumEnLetras = ""
         End If
     End Function
+    Public Function CCero(ByVal Valor As String) As Integer
+        Try
+            If Valor = "" Then
+                Return 0
+            Else
+                Return Valor
+            End If
 
+        Catch ex As Exception
+            Return 0
+        End Try
+
+    End Function
+    Public Function CDecimal(ByVal argValor As String) As Decimal
+        Dim NDecimal As Decimal
+        Dim decimalSeparator As String = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.CurrencyDecimalSeparator
+        Dim thousandsSeparator As String = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.CurrencyGroupSeparator
+
+        ' Eliminar los separadores de miles (puntos en tu ejemplo)
+        Dim valueWithoutThousands As String = argValor.Replace(thousandsSeparator, "")
+
+        ' Reemplazar el separador decimal (coma en tu ejemplo) por el separador decimal de la cultura actual
+        Dim normalizedValue As String = valueWithoutThousands.Replace(",", decimalSeparator)
+
+        ' Intentar convertir el string a Decimal
+        If Not Decimal.TryParse(normalizedValue, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.CurrentCulture, NDecimal) Then
+            ' Si no se puede convertir, manejar el error (puedes lanzar una excepción o devolver un valor por defecto)
+            Throw New ArgumentException("El valor proporcionado no es un número decimal válido.")
+        End If
+
+        Return NDecimal
+    End Function
     Public Function MensajeError(argModulo As String, argProcedimiento As String, argDescripcion As String) As String
 
         Dim msj As String
-        msj = vbCrLf & argModulo & "|" & argProcedimiento & "|" & argDescripcion
+        msj = "Modulo: " & argModulo & vbCrLf & "Procedimiento: " & argProcedimiento & vbCrLf & "Descripción: " & argDescripcion
         Return msj
 
     End Function
-
 End Module
