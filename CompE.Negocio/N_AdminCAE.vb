@@ -119,6 +119,8 @@ Public Class N_AdminCAE
                                 DateTime.ParseExact(r.FeDetResp(0).CAEFchVto, "yyyyMMdd", CultureInfo.InvariantCulture)
                                 )
 
+                Return objCAE
+                Exit Function
 
             End If
 
@@ -126,8 +128,9 @@ Public Class N_AdminCAE
                 For Each o In r.FeDetResp(0).Observaciones
                     Observaciones &= String.Format("{0} ({1})", o.Msg, o.Code) & vbCrLf
                 Next
-                MsgBox(Observaciones, vbInformation, "CompE")
-                'Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerCAE", Observaciones))
+                'MsgBox(Observaciones, vbInformation, "CompE")
+                Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerCAE", Observaciones))
+
             End If
 
             If r.Errors IsNot Nothing Then
@@ -135,14 +138,16 @@ Public Class N_AdminCAE
                 For Each er In r.Errors
                     Errores &= String.Format("{0}: {1}", er.Code, er.Msg) & vbCrLf
                 Next
-                Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerCAE", Errores))
+                Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerCAE", Errores))
+
             End If
 
             If r.Events IsNot Nothing Then
                 For Each ev In r.Events
                     Eventos &= String.Format("{0}: {1}", ev.Code, ev.Msg) & vbCrLf
                 Next
-                'Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerCAE", Eventos))
+                Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerCAE", Eventos))
+
             End If
 
         Catch ex As Exception
@@ -150,8 +155,6 @@ Public Class N_AdminCAE
                 Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerCAE", ex.Message))
             End If
         End Try
-
-        Return objCAE
 
     End Function
     Private Function getServicio() As Service
