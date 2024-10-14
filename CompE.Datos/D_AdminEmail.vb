@@ -5,17 +5,18 @@ Public Class D_AdminEmail
         Dim objEmail As Email = Nothing
         Try
 
-            Dim sql As String
+            Dim sql As String = "SELECT IdMail,Port,Host,Usuario,Contraseña,Mail FROM TblEmail"
 
-            sql = "SELECT IdMail,Port,Host,Usuario,Contraseña,Mail FROM TblEmail"
+            Dim cn As New Conexion
 
-            Dim cmd As SqlCommand = D_Admin.ConexionDB.conn.CreateCommand()
-            cmd.CommandType = CommandType.Text
-            cmd.CommandText = sql
-            Dim datos As SqlDataReader = cmd.ExecuteReader()
-            datos.Read()
-            If datos.HasRows Then
-                objEmail = New Email(
+            Using cmd As SqlCommand = cn.conn.CreateCommand()
+                cmd.CommandType = CommandType.Text
+                cmd.CommandText = sql
+
+                Using datos As SqlDataReader = cmd.ExecuteReader()
+                    datos.Read()
+                    If datos.HasRows Then
+                        objEmail = New Email(
                             datos("IdMail"),
                             datos("Port"),
                             datos("Host"),
@@ -23,7 +24,14 @@ Public Class D_AdminEmail
                             datos("Contraseña"),
                             datos("Mail")
                              )
-            End If
+                    End If
+
+                End Using
+
+            End Using
+
+            cn.CerrarConexion()
+            cn = Nothing
 
         Catch ex As Exception
             Throw ex

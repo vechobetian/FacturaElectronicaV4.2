@@ -9,37 +9,45 @@ Public Class D_AdminClientes
 
             sql = "SELECT IdCliente,IdGpoCli,RazónSocial,DNI,Calle,Número,Localidad,Provincia,Telefono,EstadoCuenta,Límite,IVA,CUIT,Email,GLN FROM TblClientes WHERE IdCliente=" & argIdCliente
 
-            Dim cmd As SqlCommand = D_Admin.ConexionDB.conn.CreateCommand()
-            cmd.CommandType = CommandType.Text
-            cmd.CommandText = sql
-            Dim datosC As SqlDataReader = cmd.ExecuteReader()
-            datosC.Read()
+            Dim cn As New Conexion
 
-            If datosC.HasRows Then
-                Dim IdCliente As Long = datosC("IdCliente")
-                Dim IdGpoCli As Long = datosC("IdGpoCli")
-                Dim RazónSocial As String = datosC("RazónSocial")
-                Dim DNI As String = datosC("DNI")
-                Dim Calle As String = datosC("Calle").ToString
-                Dim Número As String = datosC("Número").ToString
-                Dim Localidad As String = datosC("Localidad").ToString
-                Dim Provincia As String = datosC("Provincia").ToString
-                Dim Telefono As String = datosC("Telefono").ToString
-                Dim EstadoCuenta As String = datosC("EstadoCuenta")
-                Dim Límite As String = datosC("Límite")
-                Dim IVA As String = datosC("IVA")
-                Dim CUIT As String = datosC("CUIT").ToString
-                Dim GLN As String = datosC("GLN")
-                Dim Email As String = datosC("Email")
+            Using cmd As SqlCommand = cn.conn.CreateCommand()
+                cmd.CommandType = CommandType.Text
+                cmd.CommandText = sql
 
-                objCli = New Cliente(IdCliente, IdGpoCli, RazónSocial, DNI, Calle, Número, Localidad, Provincia, Telefono, EstadoCuenta, Límite, IVA, CUIT, GLN, Email)
+                Using datosC As SqlDataReader = cmd.ExecuteReader()
+                    datosC.Read()
 
-            Else
-                objCli = New Cliente(0, 0, "CONSUMIDOR FINAL", "0", "NO APLICA", "", "", "", "", "", 0, "SI", "", "", "")
-            End If
+                    If datosC.HasRows Then
+                        Dim IdCliente As Long = datosC("IdCliente")
+                        Dim IdGpoCli As Long = datosC("IdGpoCli")
+                        Dim RazónSocial As String = datosC("RazónSocial")
+                        Dim DNI As String = datosC("DNI")
+                        Dim Calle As String = datosC("Calle").ToString
+                        Dim Número As String = datosC("Número").ToString
+                        Dim Localidad As String = datosC("Localidad").ToString
+                        Dim Provincia As String = datosC("Provincia").ToString
+                        Dim Telefono As String = datosC("Telefono").ToString
+                        Dim EstadoCuenta As String = datosC("EstadoCuenta")
+                        Dim Límite As String = datosC("Límite")
+                        Dim IVA As String = datosC("IVA")
+                        Dim CUIT As String = datosC("CUIT").ToString
+                        Dim GLN As String = datosC("GLN")
+                        Dim Email As String = datosC("Email")
 
-            datosC.Close()
-            cmd.Dispose()
+                        objCli = New Cliente(IdCliente, IdGpoCli, RazónSocial, DNI, Calle, Número, Localidad, Provincia, Telefono, EstadoCuenta, Límite, IVA, CUIT, GLN, Email)
+
+                    Else
+                        objCli = New Cliente(0, 0, "CONSUMIDOR FINAL", "0", "NO APLICA", "", "", "", "", "", 0, "SI", "", "", "")
+                    End If
+
+                End Using
+
+            End Using
+
+            cn.CerrarConexion()
+            cn = Nothing
+
             Return objCli
 
         Catch ex As Exception

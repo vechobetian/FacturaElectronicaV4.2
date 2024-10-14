@@ -4,9 +4,14 @@ Public Class D_AdminOperaciones
     Public Sub RegistrarError(ByVal argIdOpera As String, argDesError As String)
         Try
             Dim sql As String = "UPDATE TblOpera SET EstadoOpera='Error',DesError='" & Replace(argDesError, "'", "") & "' WHERE IdOperación=" & argIdOpera
-            Dim cmd As SqlCommand = New SqlCommand(sql, D_Admin.ConexionDB.conn)
-            cmd.ExecuteNonQuery()
-            cmd.Dispose()
+            Dim cn As New Conexion
+
+            Using cmd As SqlCommand = cn.conn.CreateCommand()
+                cmd.ExecuteNonQuery()
+            End Using
+
+            cn.CerrarConexion()
+            cn = Nothing
 
         Catch Ex As Exception
             Throw New Exception(vecho.MensajeError(Me.ToString, "RegistrarError", Ex.Message))
@@ -15,14 +20,19 @@ Public Class D_AdminOperaciones
     End Sub
     Public Sub RegistrarFinalizado(ByVal argOperacion As Operacion)
         Try
-            Dim cmd As SqlCommand = New SqlCommand("FinalizarOperacion", D_Admin.ConexionDB.conn)
-            cmd.CommandType = CommandType.StoredProcedure
-            cmd.Parameters.AddWithValue("@IdOpera", argOperacion.IdOperacion)
-            cmd.Parameters.AddWithValue("@IdEmp", argOperacion.IdEmpleado)
-            cmd.Parameters.AddWithValue("@Estado", "Finalizado")
-            cmd.Parameters.AddWithValue("@Obser", argOperacion.Observaciones)
-            cmd.ExecuteNonQuery()
-            cmd.Dispose()
+            Dim cn As New Conexion
+
+            Using cmd As SqlCommand = New SqlCommand("FinalizarOperacion", cn.conn)
+                cmd.CommandType = CommandType.StoredProcedure
+                cmd.Parameters.AddWithValue("@IdOpera", argOperacion.IdOperacion)
+                cmd.Parameters.AddWithValue("@IdEmp", argOperacion.IdEmpleado)
+                cmd.Parameters.AddWithValue("@Estado", "Finalizado")
+                cmd.Parameters.AddWithValue("@Obser", argOperacion.Observaciones)
+                cmd.ExecuteNonQuery()
+            End Using
+
+            cn.CerrarConexion()
+            cn = Nothing
 
         Catch Ex As Exception
             Throw New Exception(vecho.MensajeError(Me.ToString, "RegistrarFinalizado", Ex.Message))
@@ -35,29 +45,38 @@ Public Class D_AdminOperaciones
         Try
 
             Dim sql As String = "SELECT IdOperación,Inicio,Fin,IdEmpr,IdPC,IdCaja,IdEmpleado,CodiTO,EstadoOpera,Observaciones FROM TblOpera WHERE IdOperación=" & argIdOpera
-            Dim cmd As SqlCommand = D_Admin.ConexionDB.conn.CreateCommand()
-            cmd.CommandType = CommandType.Text
-            cmd.CommandText = sql
-            Dim datos As SqlDataReader = cmd.ExecuteReader()
-            datos.Read()
+            Dim cn As New Conexion
 
-            If datos.HasRows Then
-                objOpera = New Operacion(
-                                        datos("IdOperación"),
-                                        datos("Inicio"),
-                                        datos("Fin"),
-                                        datos("IdEmpr"),
-                                        datos("IdPC"),
-                                        datos("IdCaja"),
-                                        datos("IdEmpleado"),
-                                        datos("CodiTO"),
-                                        datos("EstadoOpera"),
-                                        datos("Observaciones").ToString
-                                        )
+            Using cmd As SqlCommand = cn.conn.CreateCommand()
+                cmd.CommandType = CommandType.Text
+                cmd.CommandText = sql
 
-            End If
-            datos.Close()
-            cmd.Dispose()
+                Using datos As SqlDataReader = cmd.ExecuteReader()
+                    datos.Read()
+
+                    If datos.HasRows Then
+                        objOpera = New Operacion(
+                                                datos("IdOperación"),
+                                                datos("Inicio"),
+                                                datos("Fin"),
+                                                datos("IdEmpr"),
+                                                datos("IdPC"),
+                                                datos("IdCaja"),
+                                                datos("IdEmpleado"),
+                                                datos("CodiTO"),
+                                                datos("EstadoOpera"),
+                                                datos("Observaciones").ToString
+                                                )
+
+                    End If
+
+                End Using
+
+            End Using
+
+            cn.CerrarConexion()
+            cn = Nothing
+
             Return objOpera
 
         Catch ex As Exception
@@ -69,19 +88,24 @@ Public Class D_AdminOperaciones
     Public Sub AcutalizarStock(ByVal argOperacion As Operacion, ByVal argEfInf As Integer)
 
         Try
-            Dim cmd As SqlCommand = New SqlCommand("Actualizar_Stock_EnvCer", D_Admin.ConexionDB.conn)
-            cmd.CommandType = CommandType.StoredProcedure
-            cmd.Parameters.AddWithValue("@IdOpera", argOperacion.IdOperacion)
-            cmd.Parameters.AddWithValue("@EfInv", argEfInf)
-            cmd.ExecuteNonQuery()
+            Dim cn As New Conexion
 
-            cmd = New SqlCommand("Actualizar_Stock_EnvFrac", D_Admin.ConexionDB.conn)
-            cmd.CommandType = CommandType.StoredProcedure
-            cmd.Parameters.AddWithValue("@IdOpera", argOperacion.IdOperacion)
-            cmd.Parameters.AddWithValue("@EfInv", argEfInf)
-            cmd.ExecuteNonQuery()
+            Using cmd As SqlCommand = New SqlCommand("Actualizar_Stock_EnvCer", cn.conn)
+                cmd.CommandType = CommandType.StoredProcedure
+                cmd.Parameters.AddWithValue("@IdOpera", argOperacion.IdOperacion)
+                cmd.Parameters.AddWithValue("@EfInv", argEfInf)
+                cmd.ExecuteNonQuery()
+            End Using
 
-            cmd.Dispose()
+            Using cmd As SqlCommand = New SqlCommand("Actualizar_Stock_EnvFrac", cn.conn)
+                cmd.CommandType = CommandType.StoredProcedure
+                cmd.Parameters.AddWithValue("@IdOpera", argOperacion.IdOperacion)
+                cmd.Parameters.AddWithValue("@EfInv", argEfInf)
+                cmd.ExecuteNonQuery()
+            End Using
+
+            cn.CerrarConexion()
+            cn = Nothing
 
         Catch Ex As Exception
             Throw New Exception(vecho.MensajeError(Me.ToString, "ActualizarStock", Ex.Message))

@@ -55,7 +55,6 @@
     <Import Include="System.Data.Common" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="D_Admin.vb" />
     <Compile Include="D_AdminEmail.vb" />
     <Compile Include="D_AdminClientes.vb" />
     <Compile Include="Conexion.vb" />
