@@ -58,12 +58,12 @@ Module SiCoFa_CompE_Main
                 mobjN_AdminCbtes.ActualizarComprobante(mobjCbte)
                 mobjN_AdminOpera.RegistrarFinalizado(mobjCbte.Operacion)
 
-                Select Case mobjCbte.Operacion.CodiTO
-                    Case "VTAM", "INTF"
-                        mobjN_AdminOpera.ActualizarStock(mobjCbte.Operacion, -1)
-                    Case "NC"
-                        mobjN_AdminOpera.ActualizarStock(mobjCbte.Operacion, 1)
-                End Select
+                'Select Case mobjCbte.Operacion.CodiTO
+                'Case "VTAM", "INTF"
+                'mobjN_AdminOpera.ActualizarStock(mobjCbte.Operacion, -1)
+                'Case "NC"
+                'mobjN_AdminOpera.ActualizarStock(mobjCbte.Operacion, 1)
+                'End Select
             Else
                 GenerarQR()
             End If
