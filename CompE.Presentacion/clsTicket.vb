@@ -502,7 +502,7 @@ Public Class clsTicket
 
     Public Sub Imprimir(ByVal argCopia As String)
 
-        Dim strImpresora As String = ParamTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strImpresoraFE")
+        Dim strImpresora As String = ParametrosTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strImpresoraFE")
         Dim printDoc As New PrintDocument()
 
         If strImpresora <> "" Then

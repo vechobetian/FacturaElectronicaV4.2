@@ -15,36 +15,35 @@ Public Class D_AdminDetalleComprobante
         Dim objDetC As New List(Of ItemComprobante)
 
         Try
-            Dim Sql As String = "SELECT IdOperación,Descripcion,Cantidad,PUnit,Gravado,Descuento,MotivoDes,PDes FROM TblDetComprobantes WHERE IdOperación=" & argIdOperacion
+            Dim Sql As String = "SELECT IdOperación,Descripcion,Cantidad,PUnit,Gravado,Descuento,MotivoDes,PDes FROM TblDetComprobantes WHERE IdOperación=@IdOperacion"
 
-            Dim cn As New Conexion
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
 
-            Using cmd As SqlCommand = cn.conn.CreateCommand()
-                cmd.CommandType = CommandType.Text
-                cmd.CommandText = Sql
+                Using cmd As SqlCommand = cn.CreateCommand()
+                    cmd.CommandType = CommandType.Text
+                    cmd.CommandText = Sql
+                    cmd.Parameters.AddWithValue("@IdOperacion", argIdOperacion)
 
-                Using datos As SqlDataReader = cmd.ExecuteReader()
-                    Dim objItemC As ItemComprobante = Nothing
+                    Using datos As SqlDataReader = cmd.ExecuteReader()
+                        Dim objItemC As ItemComprobante = Nothing
 
-                    While datos.Read()
-                        Dim Descripcion As String = datos("Descripcion")
-                        Dim Cantidad As Integer = datos("Cantidad")
-                        Dim PUnit As Decimal = datos("PUnit")
-                        Dim Gravado As Boolean = datos("Gravado")
-                        Dim Descuento As Decimal = datos("Descuento")
-                        Dim PDes As Decimal = datos("PDes")
-                        Dim MotivoDes As String = datos("MotivoDes")
+                        While datos.Read()
+                            Dim Descripcion As String = datos("Descripcion")
+                            Dim Cantidad As Integer = datos("Cantidad")
+                            Dim PUnit As Decimal = datos("PUnit")
+                            Dim Gravado As Boolean = datos("Gravado")
+                            Dim Descuento As Decimal = datos("Descuento")
+                            Dim PDes As Decimal = datos("PDes")
+                            Dim MotivoDes As String = datos("MotivoDes")
 
-                        objItemC = New ItemComprobante(Descripcion, Cantidad, PUnit, Gravado, argDisIva, Descuento, PDes, MotivoDes)
+                            objItemC = New ItemComprobante(Descripcion, Cantidad, PUnit, Gravado, argDisIva, Descuento, PDes, MotivoDes)
 
-                        objDetC.Add(objItemC)
-                    End While
+                            objDetC.Add(objItemC)
+                        End While
 
-                    cn.CerrarConexion()
-                    cn = Nothing
-
+                    End Using
                 End Using
-
             End Using
 
             Return objDetC
@@ -62,30 +61,30 @@ Public Class D_AdminDetalleComprobante
         Dim Resumen As String
 
         Try
-            Dim sql As String = "SELECT TipoOperación,Resu,ImpClientes FROM ConRecibo WHERE IdOperación=" & argIdOperacion
-            Dim cn As New Conexion
+            Dim sql As String = "SELECT TipoOperación,Resu,ImpClientes FROM ConRecibo WHERE IdOperación=@IdOperacion"
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
 
-            Using cmd As SqlCommand = cn.conn.CreateCommand()
+                Using cmd As SqlCommand = cn.CreateCommand()
 
-                cmd.CommandType = CommandType.Text
-                cmd.CommandText = sql
-                Using datos As SqlDataReader = cmd.ExecuteReader()
+                    cmd.CommandType = CommandType.Text
+                    cmd.CommandText = sql
+                    cmd.Parameters.AddWithValue("@IdOperacion", argIdOperacion)
 
-                    datos.Read()
-                    TipoOperacion = Replace(datos("TipoOperación"), "Cancelación", "Canc.")
-                    Importe = datos("ImpClientes")
-                    If IsDBNull(datos("Resu")) Then
-                        Resumen = "NO APLICA"
-                    Else
-                        Resumen = Left(datos("Resu"), 2) & "/" & Right(datos("Resu"), 2)
-                    End If
+                    Using datos As SqlDataReader = cmd.ExecuteReader()
 
+                        datos.Read()
+                        TipoOperacion = Replace(datos("TipoOperación"), "Cancelación", "Canc.")
+                        Importe = datos("ImpClientes")
+                        If IsDBNull(datos("Resu")) Then
+                            Resumen = "NO APLICA"
+                        Else
+                            Resumen = Left(datos("Resu"), 2) & "/" & Right(datos("Resu"), 2)
+                        End If
+
+                    End Using
                 End Using
-
             End Using
-
-            cn.CerrarConexion()
-            cn = Nothing
 
             objItemR = New ItemComprobante(TipoOperacion, 1, Importe, 0, argDisIVA, 0, 0, "")
             objDetR.Add(objItemR)

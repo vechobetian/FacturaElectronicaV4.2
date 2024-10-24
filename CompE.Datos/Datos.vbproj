@@ -57,11 +57,11 @@
   <ItemGroup>
     <Compile Include="D_AdminEmail.vb" />
     <Compile Include="D_AdminClientes.vb" />
-    <Compile Include="Conexion.vb" />
     <Compile Include="D_AdminComprobantes.vb" />
     <Compile Include="D_AdminDetalleComprobante.vb" />
     <Compile Include="D_AdminEmpresa.vb" />
     <Compile Include="D_AdminOperaciones.vb" />
+    <Compile Include="mod_D_Admin.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>
   <ItemGroup>

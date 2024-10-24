@@ -19,14 +19,14 @@ Public Class D_AdminComprobantes
         Try
 
             Dim sql As String = "UPDATE TblComprobantes SET NumComp='Error' WHERE IdOperación=" & argIdOperacion
-            Dim cn As New Conexion
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
 
-            Using cmd As SqlCommand = New SqlCommand(sql, cn.conn)
-                cmd.ExecuteNonQuery()
+                Using cmd As SqlCommand = New SqlCommand(sql, cn)
+                    cmd.ExecuteNonQuery()
+                End Using
+
             End Using
-
-            cn.CerrarConexion()
-            cn = Nothing
 
         Catch ex As Exception
             Throw New Exception(vecho.MensajeError(Me.ToString, "RegistrarError", ex.Message))
@@ -37,17 +37,19 @@ Public Class D_AdminComprobantes
     Public Sub ActualizarComprobante(ByVal argCbte As Comprobante)
 
         Try
-            Dim cn As New Conexion
-            Using cmd As SqlCommand = New SqlCommand("Actualizar_FE", cn.conn)
-                cmd.CommandType = CommandType.StoredProcedure
-                cmd.Parameters.AddWithValue("@IdOpera", argCbte.Operacion.IdOperacion)
-                cmd.Parameters.AddWithValue("@NumComp", argCbte.NumComp)
-                cmd.Parameters.AddWithValue("@CAE", argCbte.CAE.NumCAE)
-                cmd.Parameters.AddWithValue("@VtoCAE", argCbte.CAE.VtoCAE)
-                cmd.ExecuteNonQuery()
-            End Using
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
 
-            cn = Nothing
+                Using cmd As SqlCommand = New SqlCommand("Actualizar_FE", cn)
+                    cmd.CommandType = CommandType.StoredProcedure
+                    cmd.Parameters.AddWithValue("@IdOpera", argCbte.Operacion.IdOperacion)
+                    cmd.Parameters.AddWithValue("@NumComp", argCbte.NumComp)
+                    cmd.Parameters.AddWithValue("@CAE", argCbte.CAE.NumCAE)
+                    cmd.Parameters.AddWithValue("@VtoCAE", argCbte.CAE.VtoCAE)
+                    cmd.ExecuteNonQuery()
+                End Using
+
+            End Using
 
         Catch Ex As Exception
             Throw New Exception(vecho.MensajeError(Me.ToString, "ActualizarComprobante", Ex.Message))
@@ -84,47 +86,48 @@ Public Class D_AdminComprobantes
             Dim VtoCAE As Date
 
             objEmpr = mobjD_AdminEmpresa.ObtenerEmpresa
-            Dim sql As String = "SELECT IdOperación,CodiTC,PrefComp,NumComp,FechaComp,IdCliente,ImpBto,ImpEx,ImpGrav,ImpNeto,ImpIVA,ImpOS,ImpEf,ImpCC,ImpTar,IdOperAsoc,CAE,VtoCAE,ImpDes FROM TblComprobantes WHERE IdOperación=" & argOperacion.IdOperacion
+            Dim sql As String = "SELECT IdOperación,CodiTC,PrefComp,NumComp,FechaComp,IdCliente,ImpBto,ImpEx,ImpGrav,ImpNeto,ImpIVA,ImpOS,ImpEf,ImpCC,ImpTar,IdOperAsoc,CAE,VtoCAE,ImpDes FROM TblComprobantes WHERE IdOperación=@IdOperacion"
 
-            Dim cn As New Conexion
-            'Dim cmd As SqlCommand = D_Admin.ConexionDB.conn.CreateCommand()
-            Using cmd As SqlCommand = cn.conn.CreateCommand()
-                cmd.CommandType = CommandType.Text
-                cmd.CommandText = sql
-                Using datosC As SqlDataReader = cmd.ExecuteReader()
-                    datosC.Read()
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
 
-                    If datosC.HasRows = False Then
-                        Throw New Exception("Comprobante no Encontrado")
-                    End If
+                Using cmd As SqlCommand = cn.CreateCommand()
+                    cmd.CommandType = CommandType.Text
+                    cmd.CommandText = sql
+                    cmd.Parameters.AddWithValue("@IdOperacion", argOperacion.IdOperacion)
 
-                    CodiTC = datosC("CodiTC")
-                    PrefComp = datosC("PrefComp")
-                    NumComp = datosC("NumComp").ToString
-                    IdCliente = datosC("IdCliente")
-                    FechaComp = datosC("FechaComp")
-                    ImpBto = datosC("ImpBto")
-                    ImpEx = datosC("ImpEx")
-                    ImpGrav = datosC("ImpGrav")
-                    ImpNeto = datosC("ImpNeto")
-                    ImpIVA = datosC("ImpIVA")
-                    ImpOS = datosC("ImpOS")
-                    ImpEf = datosC("ImpEf")
-                    ImpCC = datosC("ImpCC")
-                    ImpTar = datosC("ImpTar")
-                    ImpDes = datosC("ImpDes")
-                    IdOperAsoc = datosC("IdOperAsoc")
-                    CAE = datosC("CAE").ToString
+                    Using datosC As SqlDataReader = cmd.ExecuteReader()
+                        datosC.Read()
 
-                    If datosC("VtoCAE") IsNot DBNull.Value Then
-                        VtoCAE = datosC("VtoCAE")
-                    End If
+                        If datosC.HasRows = False Then
+                            Throw New Exception("Comprobante no Encontrado")
+                        End If
 
+                        CodiTC = datosC("CodiTC")
+                        PrefComp = datosC("PrefComp")
+                        NumComp = datosC("NumComp").ToString
+                        IdCliente = datosC("IdCliente")
+                        FechaComp = datosC("FechaComp")
+                        ImpBto = datosC("ImpBto")
+                        ImpEx = datosC("ImpEx")
+                        ImpGrav = datosC("ImpGrav")
+                        ImpNeto = datosC("ImpNeto")
+                        ImpIVA = datosC("ImpIVA")
+                        ImpOS = datosC("ImpOS")
+                        ImpEf = datosC("ImpEf")
+                        ImpCC = datosC("ImpCC")
+                        ImpTar = datosC("ImpTar")
+                        ImpDes = datosC("ImpDes")
+                        IdOperAsoc = datosC("IdOperAsoc")
+                        CAE = datosC("CAE").ToString
+
+                        If datosC("VtoCAE") IsNot DBNull.Value Then
+                            VtoCAE = datosC("VtoCAE")
+                        End If
+
+                    End Using
                 End Using
-
             End Using
-
-            cn = Nothing
 
             objCli = mobjD_AdminCliente.ObtenerCliente(IdCliente)
             objDetalleC = mobjD_AdminDetalleC.ObtenerDetalle(CodiTC, argOperacion.IdOperacion, Me.DisIva(CodiTC))
@@ -184,49 +187,50 @@ Public Class D_AdminComprobantes
             Dim VtoCAE As Date
 
             objEmpr = mobjD_AdminEmpresa.ObtenerEmpresa
-            Dim sql As String = "SELECT IdOperación,CodiTC,PrefComp,NumComp,FechaComp,IdCliente,ImpBto,ImpEx,ImpGrav,ImpNeto,ImpIVA,ImpOS,ImpEf,ImpCC,ImpTar,IdOperAsoc,CAE,VtoCAE,ImpDes FROM TblComprobantes WHERE IdOperación=" & argIdOperAsoc
+            Dim sql As String = "SELECT IdOperación,CodiTC,PrefComp,NumComp,FechaComp,IdCliente,ImpBto,ImpEx,ImpGrav,ImpNeto,ImpIVA,ImpOS,ImpEf,ImpCC,ImpTar,IdOperAsoc,CAE,VtoCAE,ImpDes FROM TblComprobantes WHERE IdOperación=@IdOperacion"
 
-            Dim cn As New Conexion
-            'Dim cmd As SqlCommand = D_Admin.ConexionDB.conn.CreateCommand()
-            Using cmd As SqlCommand = cn.conn.CreateCommand()
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
 
-                cmd.CommandType = CommandType.Text
-                cmd.CommandText = sql
-                Using datosC As SqlDataReader = cmd.ExecuteReader()
-                    datosC.Read()
+                Using cmd As SqlCommand = cn.CreateCommand()
 
-                    If datosC.HasRows = False Then
+                    cmd.CommandType = CommandType.Text
+                    cmd.CommandText = sql
+                    cmd.Parameters.AddWithValue("@IdOperacion", argIdOperAsoc)
 
-                        Throw New Exception("Comprobante no Encontrado")
-                    End If
+                    Using datosC As SqlDataReader = cmd.ExecuteReader()
+                        datosC.Read()
 
-                    CodiTC = datosC("CodiTC")
-                    PrefComp = datosC("PrefComp")
-                    NumComp = datosC("NumComp").ToString
-                    IdCliente = datosC("IdCliente")
-                    FechaComp = datosC("FechaComp")
-                    ImpBto = datosC("ImpBto")
-                    ImpEx = datosC("ImpEx")
-                    ImpGrav = datosC("ImpGrav")
-                    ImpNeto = datosC("ImpNeto")
-                    ImpIVA = datosC("ImpIVA")
-                    ImpOS = datosC("ImpOS")
-                    ImpEf = datosC("ImpEf")
-                    ImpCC = datosC("ImpCC")
-                    ImpTar = datosC("ImpTar")
-                    ImpDes = datosC("ImpDes")
-                    IdOperAsoc = datosC("IdOperAsoc")
-                    CAE = datosC("CAE").ToString
+                        If datosC.HasRows = False Then
 
-                    If datosC("VtoCAE") IsNot DBNull.Value Then
-                        VtoCAE = datosC("VtoCAE")
-                    End If
+                            Throw New Exception("Comprobante no Encontrado")
+                        End If
 
+                        CodiTC = datosC("CodiTC")
+                        PrefComp = datosC("PrefComp")
+                        NumComp = datosC("NumComp").ToString
+                        IdCliente = datosC("IdCliente")
+                        FechaComp = datosC("FechaComp")
+                        ImpBto = datosC("ImpBto")
+                        ImpEx = datosC("ImpEx")
+                        ImpGrav = datosC("ImpGrav")
+                        ImpNeto = datosC("ImpNeto")
+                        ImpIVA = datosC("ImpIVA")
+                        ImpOS = datosC("ImpOS")
+                        ImpEf = datosC("ImpEf")
+                        ImpCC = datosC("ImpCC")
+                        ImpTar = datosC("ImpTar")
+                        ImpDes = datosC("ImpDes")
+                        IdOperAsoc = datosC("IdOperAsoc")
+                        CAE = datosC("CAE").ToString
+
+                        If datosC("VtoCAE") IsNot DBNull.Value Then
+                            VtoCAE = datosC("VtoCAE")
+                        End If
+
+                    End Using
                 End Using
-
             End Using
-
-            cn = Nothing
 
             objCli = mobjD_AdminCliente.ObtenerCliente(IdCliente)
             objDetalleC = mobjD_AdminDetalleC.ObtenerDetalle(CodiTC, objOperaAsoc.IdOperacion, Me.DisIva(CodiTC))
@@ -252,32 +256,33 @@ Public Class D_AdminComprobantes
         Dim objDetR As New List(Of ItemComprobanteRecetas)
 
         Try
-            Dim Sql As String = "SELECT NombreOS,CantRtas,ImpOS FROM ConRtasPorIdOpera WHERE IdOperación=" & argIdOperacion
+            Dim Sql As String = "SELECT NombreOS,CantRtas,ImpOS FROM ConRtasPorIdOpera WHERE IdOperación=@IdOperacion"
 
-            Dim cn As New Conexion
-            'Dim cmd As SqlCommand = D_Admin.ConexionDB.conn.CreateCommand()
-            Using cmd As SqlCommand = cn.conn.CreateCommand()
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
 
-                cmd.CommandType = CommandType.Text
-                cmd.CommandText = Sql
-                Using datos As SqlDataReader = cmd.ExecuteReader()
-                    Dim objItemR As ItemComprobanteRecetas = Nothing
+                Using cmd As SqlCommand = cn.CreateCommand()
 
-                    While datos.Read()
-                        Dim NombreOS As String = datos("NombreOS")
-                        Dim CantRtas As Integer = datos("CantRtas")
-                        Dim ImpOS As Decimal = datos("ImpOS")
+                    cmd.CommandType = CommandType.Text
+                    cmd.CommandText = Sql
+                    cmd.Parameters.AddWithValue("@IdOperacion", argIdOperacion)
 
-                        objItemR = New ItemComprobanteRecetas(NombreOS, CantRtas, ImpOS)
+                    Using datos As SqlDataReader = cmd.ExecuteReader()
+                        Dim objItemR As ItemComprobanteRecetas = Nothing
 
-                        objDetR.Add(objItemR)
-                    End While
+                        While datos.Read()
+                            Dim NombreOS As String = datos("NombreOS")
+                            Dim CantRtas As Integer = datos("CantRtas")
+                            Dim ImpOS As Decimal = datos("ImpOS")
 
+                            objItemR = New ItemComprobanteRecetas(NombreOS, CantRtas, ImpOS)
+
+                            objDetR.Add(objItemR)
+                        End While
+
+                    End Using
                 End Using
-
             End Using
-
-            cn = Nothing
 
             Return objDetR
 

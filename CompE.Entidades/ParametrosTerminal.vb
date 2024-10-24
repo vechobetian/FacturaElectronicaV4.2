@@ -1,7 +1,11 @@
 ﻿Imports System.Runtime.InteropServices
 Imports System.Text
-
-Public Class ParamTerminal
+Public Class ParametrosTerminal
+    ReadOnly Property PathServer As String
+    Property MacAddress As String
+    Property IdPc As String
+    Property Impresora As String
+    Property Papel As String
 
     <DllImport("kernel32.dll", SetLastError:=True)>
     Private Shared Function GetPrivateProfileString(ByVal lpAppName As String, ByVal lpKeyName As String, ByVal lpDefault As String, ByVal lpReturnedString As StringBuilder, ByVal nSize As Integer, ByVal lpFileName As String) As Integer
@@ -18,5 +22,11 @@ Public Class ParamTerminal
     Public Shared Sub WriteINI(ByVal File As String, ByVal Section As String, ByVal Key As String, ByVal Value As String)
         WritePrivateProfileString(Section, Key, Value, File)
     End Sub
+    Public Sub New()
+
+        Me.PathServer = ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS")
+
+    End Sub
+
 
 End Class

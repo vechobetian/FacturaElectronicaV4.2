@@ -6,15 +6,17 @@ Public Class D_AdminEmpresa
         Try
 
             Dim sql As String = "SELECT Nombre,Domicilio,Localidad,Provincia,TE,CUIT,IB,IVA,InicActiv,GLN FROM TblEmpresa"
-            Dim cn As New Conexion
 
-            Using cmd As SqlCommand = cn.conn.CreateCommand()
-                cmd.CommandType = CommandType.Text
-                cmd.CommandText = sql
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
 
-                Using datos As SqlDataReader = cmd.ExecuteReader()
-                    datos.Read()
-                    objEmpr = New Empresa(
+                Using cmd As SqlCommand = cn.CreateCommand()
+                    cmd.CommandType = CommandType.Text
+                    cmd.CommandText = sql
+
+                    Using datos As SqlDataReader = cmd.ExecuteReader()
+                        datos.Read()
+                        objEmpr = New Empresa(
                                     datos("Nombre"),
                                     datos("Domicilio"),
                                     datos("Localidad"),
@@ -27,12 +29,9 @@ Public Class D_AdminEmpresa
                                     datos("GLN")
                                     )
 
+                    End Using
                 End Using
-
             End Using
-
-            cn.CerrarConexion()
-            cn = Nothing
 
             Return objEmpr
 

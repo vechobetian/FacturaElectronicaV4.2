@@ -28,7 +28,7 @@ Public Class clsGenerarPDF
 
     'Crear un informe local para Report.rdlc, cargar los datos, exportar el informe a un archivo .emf e imprimirlo.
     Public Sub Run()
-        Dim strPS As String = ParamTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS")
+        Dim strPS As String = ParametrosTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS")
         Dim report As New LocalReport()
         Dim param As New List(Of ReportParameter)
         param.Add(New ReportParameter("Copia", Me.Copia))

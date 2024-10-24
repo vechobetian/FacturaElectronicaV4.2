@@ -7,46 +7,45 @@ Public Class D_AdminClientes
         Try
             Dim sql As String
 
-            sql = "SELECT IdCliente,IdGpoCli,RazónSocial,DNI,Calle,Número,Localidad,Provincia,Telefono,EstadoCuenta,Límite,IVA,CUIT,Email,GLN FROM TblClientes WHERE IdCliente=" & argIdCliente
+            sql = "SELECT IdCliente,IdGpoCli,RazónSocial,DNI,Calle,Número,Localidad,Provincia,Telefono,EstadoCuenta,Límite,IVA,CUIT,Email,GLN FROM TblClientes WHERE IdCliente=@IdCliente"
 
-            Dim cn As New Conexion
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
 
-            Using cmd As SqlCommand = cn.conn.CreateCommand()
-                cmd.CommandType = CommandType.Text
-                cmd.CommandText = sql
+                Using cmd As SqlCommand = cn.CreateCommand()
+                    cmd.CommandType = CommandType.Text
+                    cmd.CommandText = sql
+                    cmd.Parameters.AddWithValue("@IdCliente", argIdCliente)
 
-                Using datosC As SqlDataReader = cmd.ExecuteReader()
-                    datosC.Read()
+                    Using datosC As SqlDataReader = cmd.ExecuteReader()
+                        datosC.Read()
 
-                    If datosC.HasRows Then
-                        Dim IdCliente As Long = datosC("IdCliente")
-                        Dim IdGpoCli As Long = datosC("IdGpoCli")
-                        Dim RazónSocial As String = datosC("RazónSocial")
-                        Dim DNI As String = datosC("DNI")
-                        Dim Calle As String = datosC("Calle").ToString
-                        Dim Número As String = datosC("Número").ToString
-                        Dim Localidad As String = datosC("Localidad").ToString
-                        Dim Provincia As String = datosC("Provincia").ToString
-                        Dim Telefono As String = datosC("Telefono").ToString
-                        Dim EstadoCuenta As String = datosC("EstadoCuenta")
-                        Dim Límite As String = datosC("Límite")
-                        Dim IVA As String = datosC("IVA")
-                        Dim CUIT As String = datosC("CUIT").ToString
-                        Dim GLN As String = datosC("GLN")
-                        Dim Email As String = datosC("Email")
+                        If datosC.HasRows Then
+                            Dim IdCliente As Long = datosC("IdCliente")
+                            Dim IdGpoCli As Long = datosC("IdGpoCli")
+                            Dim RazónSocial As String = datosC("RazónSocial")
+                            Dim DNI As String = datosC("DNI")
+                            Dim Calle As String = datosC("Calle").ToString
+                            Dim Número As String = datosC("Número").ToString
+                            Dim Localidad As String = datosC("Localidad").ToString
+                            Dim Provincia As String = datosC("Provincia").ToString
+                            Dim Telefono As String = datosC("Telefono").ToString
+                            Dim EstadoCuenta As String = datosC("EstadoCuenta")
+                            Dim Límite As String = datosC("Límite")
+                            Dim IVA As String = datosC("IVA")
+                            Dim CUIT As String = datosC("CUIT").ToString
+                            Dim GLN As String = datosC("GLN")
+                            Dim Email As String = datosC("Email")
 
-                        objCli = New Cliente(IdCliente, IdGpoCli, RazónSocial, DNI, Calle, Número, Localidad, Provincia, Telefono, EstadoCuenta, Límite, IVA, CUIT, GLN, Email)
+                            objCli = New Cliente(IdCliente, IdGpoCli, RazónSocial, DNI, Calle, Número, Localidad, Provincia, Telefono, EstadoCuenta, Límite, IVA, CUIT, GLN, Email)
 
-                    Else
-                        objCli = New Cliente(0, 0, "CONSUMIDOR FINAL", "0", "NO APLICA", "", "", "", "", "", 0, "SI", "", "", "")
-                    End If
+                        Else
+                            objCli = New Cliente(0, 0, "CONSUMIDOR FINAL", "0", "NO APLICA", "", "", "", "", "", 0, "SI", "", "", "")
+                        End If
 
+                    End Using
                 End Using
-
             End Using
-
-            cn.CerrarConexion()
-            cn = Nothing
 
             Return objCli
 

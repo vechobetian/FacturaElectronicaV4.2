@@ -10,7 +10,7 @@ Public Class N_AdminLoginTicket
     Property CertFirmante As X509Certificate2
     Property TicketAcceso As LoginTicket
 
-    Private mstrPathServidor As String = ParamTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS")
+    Private mstrPathServidor As String = ParametrosTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS")
     Private XmlLoginTicketResponse As XmlDocument = Nothing
     Private mstrPasswordSecureString As New SecureString
     Private mstrProxy As String = Nothing

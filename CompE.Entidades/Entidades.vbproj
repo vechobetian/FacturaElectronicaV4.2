@@ -95,7 +95,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Operacion.vb" />
-    <Compile Include="ParamTerminal.vb" />
+    <Compile Include="ParametrosTerminal.vb" />
     <Compile Include="QRCompE.vb" />
     <Compile Include="TipoComprobante.vb" />
   </ItemGroup>
