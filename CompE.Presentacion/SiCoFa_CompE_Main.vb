@@ -43,6 +43,10 @@ Module SiCoFa_CompE_Main
                 Exit Sub
             End If
 
+            If objOpera.Estado <> "Finalizado" Then
+                Exit Sub
+            End If
+
             mobjN_AdminCbtes = New N_AdminComprobantes
             mobjCbte = mobjN_AdminCbtes.ObtenerComprobante(objOpera)
 
