@@ -60,7 +60,8 @@ Module SiCoFa_CompE_Main
                 End If
 
                 mobjN_AdminCbtes.ActualizarComprobante(mobjCbte)
-                mobjN_AdminOpera.RegistrarFinalizado(mobjCbte.Operacion)
+
+                'mobjN_AdminOpera.RegistrarFinalizado(mobjCbte.Operacion)
 
                 'Select Case mobjCbte.Operacion.CodiTO
                 'Case "VTAM", "INTF"
