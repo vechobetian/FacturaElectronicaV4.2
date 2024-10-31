@@ -3,15 +3,15 @@ Imports SiCoFa.Entidades
 Public Class D_AdminOperaciones
     Public Sub RegistrarError(ByVal argIdOpera As String, argDesError As String)
         Try
-            Dim sql As String = "UPDATE TblOpera SET EstadoOpera='Error',DesError='" & Replace(argDesError, "'", "") & "' WHERE IdOperación=" & argIdOpera
-
             Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
                 cn.Open()
 
-                Using cmd As SqlCommand = cn.CreateCommand()
+                Using cmd As SqlCommand = New SqlCommand("RegistrarError", cn)
+                    cmd.CommandType = CommandType.StoredProcedure
+                    cmd.Parameters.AddWithValue("@IdOpera", argIdOpera)
+                    cmd.Parameters.AddWithValue("@DesError", argDesError)
                     cmd.ExecuteNonQuery()
                 End Using
-
             End Using
 
         Catch Ex As Exception
