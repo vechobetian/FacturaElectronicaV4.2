@@ -191,22 +191,22 @@ Public Class clsTicket
 
         End If
 
-        If Comprobante.TipoComprobante.Letra = "B" Or Comprobante.TipoComprobante.Letra = "C" Then
-            yPos += 2 * IncrementoYPreTexto
+        If Comprobante.TipoComprobante.Letra = "A" Or Comprobante.TipoComprobante.Letra = "B" Or Comprobante.TipoComprobante.Letra = "C" Then
+            yPos += IncrementoYPreTexto
             e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
             yPos += IncrementoYPreTexto
             e.Graphics.DrawString("Régimen de Transparencia Fiscal(Ley 27743)", printFont, Brushes.Black, MargenIzquierdo, yPos)
 
             strIVA = Format(Comprobante.IVA, "Standard")
             yPos += IncrementoYPreTexto
-            e.Graphics.DrawString("IVA Contenido: " & StrDup(35 - Len(strIVA), " ") & strIVA, printFont, Brushes.Black, MargenIzquierdo, yPos)
+            e.Graphics.DrawString("IVA Contenido: " & StrDup(26 - Len(strIVA), " ") & strIVA, printFont, Brushes.Black, MargenIzquierdo, yPos)
             yPos += IncrementoYPreTexto
-            e.Graphics.DrawString("Otros Impuestos Nacionales Indirectos: " & StrDup(35 - Len(strIVA), " ") & strIVA, printFont, Brushes.Black, MargenIzquierdo, yPos)
+            e.Graphics.DrawString("Otros Impuestos Nacionales: " & StrDup(13 - Len("0,00"), " ") & "0,00", printFont, Brushes.Black, MargenIzquierdo, yPos)
             yPos += IncrementoYPreLinea
             e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
         End If
 
-        yPos += 2 * IncrementoYPreTexto
+        yPos += IncrementoYPreTexto
         e.Graphics.DrawString("RECIBI(MOS)", printFont, Brushes.Black, MargenIzquierdo, yPos)
 
         If Comprobante.ImpOS > 0 Then
