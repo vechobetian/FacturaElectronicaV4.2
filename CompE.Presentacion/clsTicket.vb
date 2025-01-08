@@ -191,7 +191,7 @@ Public Class clsTicket
 
         End If
 
-        If Comprobante.TipoComprobante.Letra = "A" Or Comprobante.TipoComprobante.Letra = "B" Or Comprobante.TipoComprobante.Letra = "C" Then
+        If Comprobante.TipoComprobante.Letra = "B" Then
             yPos += IncrementoYPreTexto
             e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
             yPos += IncrementoYPreTexto
