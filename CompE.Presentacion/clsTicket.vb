@@ -204,6 +204,8 @@ Public Class clsTicket
             e.Graphics.DrawString("Otros Impuestos Nacionales: " & StrDup(13 - Len("0,00"), " ") & "0,00", printFont, Brushes.Black, MargenIzquierdo, yPos)
             yPos += IncrementoYPreLinea
             e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
+        Else
+            yPos += IncrementoYPreLinea * 2
         End If
 
         yPos += IncrementoYPreTexto
