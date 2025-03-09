@@ -71,9 +71,13 @@ Namespace WSN
         
         Private FEParamGetTiposCbteOperationCompleted As System.Threading.SendOrPostCallback
         
+        Private FEParamGetCondicionIvaReceptorOperationCompleted As System.Threading.SendOrPostCallback
+        
         Private FEParamGetTiposDocOperationCompleted As System.Threading.SendOrPostCallback
         
         Private FEParamGetTiposPaisesOperationCompleted As System.Threading.SendOrPostCallback
+        
+        Private FEParamGetActividadesOperationCompleted As System.Threading.SendOrPostCallback
         
         Private useDefaultCredentialsSetExplicitly As Boolean
         
@@ -168,10 +172,16 @@ Namespace WSN
         Public Event FEParamGetTiposCbteCompleted As FEParamGetTiposCbteCompletedEventHandler
         
         '''<remarks/>
+        Public Event FEParamGetCondicionIvaReceptorCompleted As FEParamGetCondicionIvaReceptorCompletedEventHandler
+        
+        '''<remarks/>
         Public Event FEParamGetTiposDocCompleted As FEParamGetTiposDocCompletedEventHandler
         
         '''<remarks/>
         Public Event FEParamGetTiposPaisesCompleted As FEParamGetTiposPaisesCompletedEventHandler
+        
+        '''<remarks/>
+        Public Event FEParamGetActividadesCompleted As FEParamGetActividadesCompletedEventHandler
         
         '''<remarks/>
         <System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FECAESolicitar", RequestNamespace:="http://ar.gov.afip.dif.FEV1/", ResponseNamespace:="http://ar.gov.afip.dif.FEV1/", Use:=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle:=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)>  _
@@ -445,22 +455,22 @@ Namespace WSN
         
         '''<remarks/>
         <System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FEParamGetCotizacion", RequestNamespace:="http://ar.gov.afip.dif.FEV1/", ResponseNamespace:="http://ar.gov.afip.dif.FEV1/", Use:=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle:=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)>  _
-        Public Function FEParamGetCotizacion(ByVal Auth As FEAuthRequest, ByVal MonId As String) As FECotizacionResponse
-            Dim results() As Object = Me.Invoke("FEParamGetCotizacion", New Object() {Auth, MonId})
+        Public Function FEParamGetCotizacion(ByVal Auth As FEAuthRequest, ByVal MonId As String, ByVal FchCotiz As String) As FECotizacionResponse
+            Dim results() As Object = Me.Invoke("FEParamGetCotizacion", New Object() {Auth, MonId, FchCotiz})
             Return CType(results(0),FECotizacionResponse)
         End Function
         
         '''<remarks/>
-        Public Overloads Sub FEParamGetCotizacionAsync(ByVal Auth As FEAuthRequest, ByVal MonId As String)
-            Me.FEParamGetCotizacionAsync(Auth, MonId, Nothing)
+        Public Overloads Sub FEParamGetCotizacionAsync(ByVal Auth As FEAuthRequest, ByVal MonId As String, ByVal FchCotiz As String)
+            Me.FEParamGetCotizacionAsync(Auth, MonId, FchCotiz, Nothing)
         End Sub
         
         '''<remarks/>
-        Public Overloads Sub FEParamGetCotizacionAsync(ByVal Auth As FEAuthRequest, ByVal MonId As String, ByVal userState As Object)
+        Public Overloads Sub FEParamGetCotizacionAsync(ByVal Auth As FEAuthRequest, ByVal MonId As String, ByVal FchCotiz As String, ByVal userState As Object)
             If (Me.FEParamGetCotizacionOperationCompleted Is Nothing) Then
                 Me.FEParamGetCotizacionOperationCompleted = AddressOf Me.OnFEParamGetCotizacionOperationCompleted
             End If
-            Me.InvokeAsync("FEParamGetCotizacion", New Object() {Auth, MonId}, Me.FEParamGetCotizacionOperationCompleted, userState)
+            Me.InvokeAsync("FEParamGetCotizacion", New Object() {Auth, MonId, FchCotiz}, Me.FEParamGetCotizacionOperationCompleted, userState)
         End Sub
         
         Private Sub OnFEParamGetCotizacionOperationCompleted(ByVal arg As Object)
@@ -660,6 +670,33 @@ Namespace WSN
         End Sub
         
         '''<remarks/>
+        <System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FEParamGetCondicionIvaReceptor", RequestNamespace:="http://ar.gov.afip.dif.FEV1/", ResponseNamespace:="http://ar.gov.afip.dif.FEV1/", Use:=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle:=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)>  _
+        Public Function FEParamGetCondicionIvaReceptor(ByVal Auth As FEAuthRequest, ByVal ClaseCmp As String) As CondicionIvaReceptorResponse
+            Dim results() As Object = Me.Invoke("FEParamGetCondicionIvaReceptor", New Object() {Auth, ClaseCmp})
+            Return CType(results(0),CondicionIvaReceptorResponse)
+        End Function
+        
+        '''<remarks/>
+        Public Overloads Sub FEParamGetCondicionIvaReceptorAsync(ByVal Auth As FEAuthRequest, ByVal ClaseCmp As String)
+            Me.FEParamGetCondicionIvaReceptorAsync(Auth, ClaseCmp, Nothing)
+        End Sub
+        
+        '''<remarks/>
+        Public Overloads Sub FEParamGetCondicionIvaReceptorAsync(ByVal Auth As FEAuthRequest, ByVal ClaseCmp As String, ByVal userState As Object)
+            If (Me.FEParamGetCondicionIvaReceptorOperationCompleted Is Nothing) Then
+                Me.FEParamGetCondicionIvaReceptorOperationCompleted = AddressOf Me.OnFEParamGetCondicionIvaReceptorOperationCompleted
+            End If
+            Me.InvokeAsync("FEParamGetCondicionIvaReceptor", New Object() {Auth, ClaseCmp}, Me.FEParamGetCondicionIvaReceptorOperationCompleted, userState)
+        End Sub
+        
+        Private Sub OnFEParamGetCondicionIvaReceptorOperationCompleted(ByVal arg As Object)
+            If (Not (Me.FEParamGetCondicionIvaReceptorCompletedEvent) Is Nothing) Then
+                Dim invokeArgs As System.Web.Services.Protocols.InvokeCompletedEventArgs = CType(arg,System.Web.Services.Protocols.InvokeCompletedEventArgs)
+                RaiseEvent FEParamGetCondicionIvaReceptorCompleted(Me, New FEParamGetCondicionIvaReceptorCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState))
+            End If
+        End Sub
+        
+        '''<remarks/>
         <System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FEParamGetTiposDoc", RequestNamespace:="http://ar.gov.afip.dif.FEV1/", ResponseNamespace:="http://ar.gov.afip.dif.FEV1/", Use:=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle:=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)>  _
         Public Function FEParamGetTiposDoc(ByVal Auth As FEAuthRequest) As DocTipoResponse
             Dim results() As Object = Me.Invoke("FEParamGetTiposDoc", New Object() {Auth})
@@ -710,6 +747,33 @@ Namespace WSN
             If (Not (Me.FEParamGetTiposPaisesCompletedEvent) Is Nothing) Then
                 Dim invokeArgs As System.Web.Services.Protocols.InvokeCompletedEventArgs = CType(arg,System.Web.Services.Protocols.InvokeCompletedEventArgs)
                 RaiseEvent FEParamGetTiposPaisesCompleted(Me, New FEParamGetTiposPaisesCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState))
+            End If
+        End Sub
+        
+        '''<remarks/>
+        <System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FEParamGetActividades", RequestNamespace:="http://ar.gov.afip.dif.FEV1/", ResponseNamespace:="http://ar.gov.afip.dif.FEV1/", Use:=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle:=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)>  _
+        Public Function FEParamGetActividades(ByVal Auth As FEAuthRequest) As FEActividadesResponse
+            Dim results() As Object = Me.Invoke("FEParamGetActividades", New Object() {Auth})
+            Return CType(results(0),FEActividadesResponse)
+        End Function
+        
+        '''<remarks/>
+        Public Overloads Sub FEParamGetActividadesAsync(ByVal Auth As FEAuthRequest)
+            Me.FEParamGetActividadesAsync(Auth, Nothing)
+        End Sub
+        
+        '''<remarks/>
+        Public Overloads Sub FEParamGetActividadesAsync(ByVal Auth As FEAuthRequest, ByVal userState As Object)
+            If (Me.FEParamGetActividadesOperationCompleted Is Nothing) Then
+                Me.FEParamGetActividadesOperationCompleted = AddressOf Me.OnFEParamGetActividadesOperationCompleted
+            End If
+            Me.InvokeAsync("FEParamGetActividades", New Object() {Auth}, Me.FEParamGetActividadesOperationCompleted, userState)
+        End Sub
+        
+        Private Sub OnFEParamGetActividadesOperationCompleted(ByVal arg As Object)
+            If (Not (Me.FEParamGetActividadesCompletedEvent) Is Nothing) Then
+                Dim invokeArgs As System.Web.Services.Protocols.InvokeCompletedEventArgs = CType(arg,System.Web.Services.Protocols.InvokeCompletedEventArgs)
+                RaiseEvent FEParamGetActividadesCompleted(Me, New FEParamGetActividadesCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState))
             End If
         End Sub
         
@@ -783,19 +847,31 @@ Namespace WSN
      System.Diagnostics.DebuggerStepThroughAttribute(),  _
      System.ComponentModel.DesignerCategoryAttribute("code"),  _
      System.Xml.Serialization.XmlTypeAttribute([Namespace]:="http://ar.gov.afip.dif.FEV1/")>  _
-    Partial Public Class PaisTipo
+    Partial Public Class ActividadesTipo
         
-        Private idField As Short
+        Private idField As Long
+        
+        Private ordenField As Short
         
         Private descField As String
         
         '''<remarks/>
-        Public Property Id() As Short
+        Public Property Id() As Long
             Get
                 Return Me.idField
             End Get
             Set
                 Me.idField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property Orden() As Short
+            Get
+                Return Me.ordenField
+            End Get
+            Set
+                Me.ordenField = value
             End Set
         End Property
         
@@ -816,16 +892,16 @@ Namespace WSN
      System.Diagnostics.DebuggerStepThroughAttribute(),  _
      System.ComponentModel.DesignerCategoryAttribute("code"),  _
      System.Xml.Serialization.XmlTypeAttribute([Namespace]:="http://ar.gov.afip.dif.FEV1/")>  _
-    Partial Public Class FEPaisResponse
+    Partial Public Class FEActividadesResponse
         
-        Private resultGetField() As PaisTipo
+        Private resultGetField() As ActividadesTipo
         
         Private errorsField() As Err
         
         Private eventsField() As Evt
         
         '''<remarks/>
-        Public Property ResultGet() As PaisTipo()
+        Public Property ResultGet() As ActividadesTipo()
             Get
                 Return Me.resultGetField
             End Get
@@ -927,6 +1003,84 @@ Namespace WSN
      System.Diagnostics.DebuggerStepThroughAttribute(),  _
      System.ComponentModel.DesignerCategoryAttribute("code"),  _
      System.Xml.Serialization.XmlTypeAttribute([Namespace]:="http://ar.gov.afip.dif.FEV1/")>  _
+    Partial Public Class PaisTipo
+        
+        Private idField As Short
+        
+        Private descField As String
+        
+        '''<remarks/>
+        Public Property Id() As Short
+            Get
+                Return Me.idField
+            End Get
+            Set
+                Me.idField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property Desc() As String
+            Get
+                Return Me.descField
+            End Get
+            Set
+                Me.descField = value
+            End Set
+        End Property
+    End Class
+    
+    '''<remarks/>
+    <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0"),  _
+     System.SerializableAttribute(),  _
+     System.Diagnostics.DebuggerStepThroughAttribute(),  _
+     System.ComponentModel.DesignerCategoryAttribute("code"),  _
+     System.Xml.Serialization.XmlTypeAttribute([Namespace]:="http://ar.gov.afip.dif.FEV1/")>  _
+    Partial Public Class FEPaisResponse
+        
+        Private resultGetField() As PaisTipo
+        
+        Private errorsField() As Err
+        
+        Private eventsField() As Evt
+        
+        '''<remarks/>
+        Public Property ResultGet() As PaisTipo()
+            Get
+                Return Me.resultGetField
+            End Get
+            Set
+                Me.resultGetField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property Errors() As Err()
+            Get
+                Return Me.errorsField
+            End Get
+            Set
+                Me.errorsField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property Events() As Evt()
+            Get
+                Return Me.eventsField
+            End Get
+            Set
+                Me.eventsField = value
+            End Set
+        End Property
+    End Class
+    
+    '''<remarks/>
+    <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0"),  _
+     System.SerializableAttribute(),  _
+     System.Diagnostics.DebuggerStepThroughAttribute(),  _
+     System.ComponentModel.DesignerCategoryAttribute("code"),  _
+     System.Xml.Serialization.XmlTypeAttribute([Namespace]:="http://ar.gov.afip.dif.FEV1/")>  _
     Partial Public Class DocTipo
         
         Private idField As Integer
@@ -994,6 +1148,96 @@ Namespace WSN
         
         '''<remarks/>
         Public Property ResultGet() As DocTipo()
+            Get
+                Return Me.resultGetField
+            End Get
+            Set
+                Me.resultGetField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property Errors() As Err()
+            Get
+                Return Me.errorsField
+            End Get
+            Set
+                Me.errorsField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property Events() As Evt()
+            Get
+                Return Me.eventsField
+            End Get
+            Set
+                Me.eventsField = value
+            End Set
+        End Property
+    End Class
+    
+    '''<remarks/>
+    <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0"),  _
+     System.SerializableAttribute(),  _
+     System.Diagnostics.DebuggerStepThroughAttribute(),  _
+     System.ComponentModel.DesignerCategoryAttribute("code"),  _
+     System.Xml.Serialization.XmlTypeAttribute([Namespace]:="http://ar.gov.afip.dif.FEV1/")>  _
+    Partial Public Class CondicionIvaReceptor
+        
+        Private idField As Integer
+        
+        Private descField As String
+        
+        Private cmp_ClaseField As String
+        
+        '''<remarks/>
+        Public Property Id() As Integer
+            Get
+                Return Me.idField
+            End Get
+            Set
+                Me.idField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property Desc() As String
+            Get
+                Return Me.descField
+            End Get
+            Set
+                Me.descField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property Cmp_Clase() As String
+            Get
+                Return Me.cmp_ClaseField
+            End Get
+            Set
+                Me.cmp_ClaseField = value
+            End Set
+        End Property
+    End Class
+    
+    '''<remarks/>
+    <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0"),  _
+     System.SerializableAttribute(),  _
+     System.Diagnostics.DebuggerStepThroughAttribute(),  _
+     System.ComponentModel.DesignerCategoryAttribute("code"),  _
+     System.Xml.Serialization.XmlTypeAttribute([Namespace]:="http://ar.gov.afip.dif.FEV1/")>  _
+    Partial Public Class CondicionIvaReceptorResponse
+        
+        Private resultGetField() As CondicionIvaReceptor
+        
+        Private errorsField() As Err
+        
+        Private eventsField() As Evt
+        
+        '''<remarks/>
+        Public Property ResultGet() As CondicionIvaReceptor()
             Get
                 Return Me.resultGetField
             End Get
@@ -2661,6 +2905,12 @@ Namespace WSN
         
         Private monCotizField As Double
         
+        Private monCotizFieldSpecified As Boolean
+        
+        Private canMisMonExtField As String
+        
+        Private condicionIVAReceptorIdField As Integer
+        
         Private cbtesAsocField() As CbteAsoc
         
         Private tributosField() As Tributo
@@ -2672,6 +2922,8 @@ Namespace WSN
         Private compradoresField() As Comprador
         
         Private periodoAsocField As Periodo
+        
+        Private actividadesField() As Actividad
         
         '''<remarks/>
         Public Property Concepto() As Integer
@@ -2844,6 +3096,37 @@ Namespace WSN
         End Property
         
         '''<remarks/>
+        <System.Xml.Serialization.XmlIgnoreAttribute()>  _
+        Public Property MonCotizSpecified() As Boolean
+            Get
+                Return Me.monCotizFieldSpecified
+            End Get
+            Set
+                Me.monCotizFieldSpecified = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property CanMisMonExt() As String
+            Get
+                Return Me.canMisMonExtField
+            End Get
+            Set
+                Me.canMisMonExtField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property CondicionIVAReceptorId() As Integer
+            Get
+                Return Me.condicionIVAReceptorIdField
+            End Get
+            Set
+                Me.condicionIVAReceptorIdField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
         Public Property CbtesAsoc() As CbteAsoc()
             Get
                 Return Me.cbtesAsocField
@@ -2900,6 +3183,16 @@ Namespace WSN
             End Get
             Set
                 Me.periodoAsocField = value
+            End Set
+        End Property
+        
+        '''<remarks/>
+        Public Property Actividades() As Actividad()
+            Get
+                Return Me.actividadesField
+            End Get
+            Set
+                Me.actividadesField = value
             End Set
         End Property
     End Class
@@ -3194,6 +3487,27 @@ Namespace WSN
             End Get
             Set
                 Me.fchHastaField = value
+            End Set
+        End Property
+    End Class
+    
+    '''<remarks/>
+    <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0"),  _
+     System.SerializableAttribute(),  _
+     System.Diagnostics.DebuggerStepThroughAttribute(),  _
+     System.ComponentModel.DesignerCategoryAttribute("code"),  _
+     System.Xml.Serialization.XmlTypeAttribute([Namespace]:="http://ar.gov.afip.dif.FEV1/")>  _
+    Partial Public Class Actividad
+        
+        Private idField As Long
+        
+        '''<remarks/>
+        Public Property Id() As Long
+            Get
+                Return Me.idField
+            End Get
+            Set
+                Me.idField = value
             End Set
         End Property
     End Class
@@ -4142,6 +4456,33 @@ Namespace WSN
     
     '''<remarks/>
     <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")>  _
+    Public Delegate Sub FEParamGetCondicionIvaReceptorCompletedEventHandler(ByVal sender As Object, ByVal e As FEParamGetCondicionIvaReceptorCompletedEventArgs)
+    
+    '''<remarks/>
+    <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0"),  _
+     System.Diagnostics.DebuggerStepThroughAttribute(),  _
+     System.ComponentModel.DesignerCategoryAttribute("code")>  _
+    Partial Public Class FEParamGetCondicionIvaReceptorCompletedEventArgs
+        Inherits System.ComponentModel.AsyncCompletedEventArgs
+        
+        Private results() As Object
+        
+        Friend Sub New(ByVal results() As Object, ByVal exception As System.Exception, ByVal cancelled As Boolean, ByVal userState As Object)
+            MyBase.New(exception, cancelled, userState)
+            Me.results = results
+        End Sub
+        
+        '''<remarks/>
+        Public ReadOnly Property Result() As CondicionIvaReceptorResponse
+            Get
+                Me.RaiseExceptionIfNecessary
+                Return CType(Me.results(0),CondicionIvaReceptorResponse)
+            End Get
+        End Property
+    End Class
+    
+    '''<remarks/>
+    <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")>  _
     Public Delegate Sub FEParamGetTiposDocCompletedEventHandler(ByVal sender As Object, ByVal e As FEParamGetTiposDocCompletedEventArgs)
     
     '''<remarks/>
@@ -4190,6 +4531,33 @@ Namespace WSN
             Get
                 Me.RaiseExceptionIfNecessary
                 Return CType(Me.results(0),FEPaisResponse)
+            End Get
+        End Property
+    End Class
+    
+    '''<remarks/>
+    <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")>  _
+    Public Delegate Sub FEParamGetActividadesCompletedEventHandler(ByVal sender As Object, ByVal e As FEParamGetActividadesCompletedEventArgs)
+    
+    '''<remarks/>
+    <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0"),  _
+     System.Diagnostics.DebuggerStepThroughAttribute(),  _
+     System.ComponentModel.DesignerCategoryAttribute("code")>  _
+    Partial Public Class FEParamGetActividadesCompletedEventArgs
+        Inherits System.ComponentModel.AsyncCompletedEventArgs
+        
+        Private results() As Object
+        
+        Friend Sub New(ByVal results() As Object, ByVal exception As System.Exception, ByVal cancelled As Boolean, ByVal userState As Object)
+            MyBase.New(exception, cancelled, userState)
+            Me.results = results
+        End Sub
+        
+        '''<remarks/>
+        Public ReadOnly Property Result() As FEActividadesResponse
+            Get
+                Me.RaiseExceptionIfNecessary
+                Return CType(Me.results(0),FEActividadesResponse)
             End Get
         End Property
     End Class

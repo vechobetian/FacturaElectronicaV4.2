@@ -27,7 +27,7 @@ Namespace WSAA
     <System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0"),  _
      System.Diagnostics.DebuggerStepThroughAttribute(),  _
      System.ComponentModel.DesignerCategoryAttribute("code"),  _
-     System.Web.Services.WebServiceBindingAttribute(Name:="LoginCmsSoapBinding", [Namespace]:="https://wsaa.afip.gov.ar/ws/services/LoginCms")>  _
+     System.Web.Services.WebServiceBindingAttribute(Name:="LoginCmsSoapBinding", [Namespace]:="https://wsaahomo.afip.gov.ar/ws/services/LoginCms")>  _
     Partial Public Class LoginCMSService
         Inherits System.Web.Services.Protocols.SoapHttpClientProtocol
         

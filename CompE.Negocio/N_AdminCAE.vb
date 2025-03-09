@@ -100,9 +100,14 @@ Public Class N_AdminCAE
 
                 End If
 
+                Dim IdIvaRec = Me.IdIVAReceptor(argComprobante.Cliente.IVA)
+
                 .ImpTrib = 0
                 .MonId = "PES"
+                '.CanMisMonExt = "S"
+                .MonCotizSpecified = True
                 .MonCotiz = 1
+                .CondicionIVAReceptorId = IdIvaRec
             End With
 
             req.FeDetReq = {det}
@@ -162,5 +167,64 @@ Public Class N_AdminCAE
         s.Url = URLWsn
         Return s
     End Function
+    Private Function IdIVAReceptor(IVA As String) As Integer
+        Select Case IVA
+            Case "RI"
+                Return 1
+            Case "MT"
+                Return 6
+            Case "EX"
+                Return 4
+            Case "CF"
+                Return 5
+            Case "SI" 'sin identificar
+                Return 15
+        End Select
 
+
+        '"Id": 1,
+        '"Desc": "IVA Responsable Inscripto",
+        '"Cmp_Clase": "A/M/C"    
+
+        '"Id": 6,
+        '"Desc": "Responsable Monotributo",
+        '"Cmp_Clase": "A/M/C"    
+
+        '"Id": 13,
+        '"Desc": "Monotributista Social",
+        '"Cmp_Clase": "A/M/C"    
+
+        '"Id": 16,
+        '"Desc": "Monotributo Trabajador Independiente Promovido",
+        '"Cmp_Clase": "A/M/C"    
+
+        '"Id": 4,
+        '"Desc": "IVA Sujeto Exento",
+        '"Cmp_Clase": "B/C"    
+
+        '"Id": 5,
+        '"Desc": "Consumidor Final",
+        '"Cmp_Clase": "B/C"    
+
+        '"Id": 7,
+        '"Desc": "Sujeto No Categorizado",
+        '"Cmp_Clase": "B/C"    
+
+        '"Id": 8,
+        '"Desc": "Proveedor del Exterior",
+        '"Cmp_Clase": "B/C"    
+
+        '"Id": 9,
+        '"Desc": "Cliente del Exterior",
+        '"Cmp_Clase": "B/C"    
+
+        '"Id": 10,
+        '"Desc": "IVA Liberado – Ley N° 19.640",
+        '"Cmp_Clase": "B/C"    
+
+        '"Id": 15,
+        '"Desc": "IVA No Alcanzado",
+        '"Cmp_Clase": "B/C"
+
+    End Function
 End Class

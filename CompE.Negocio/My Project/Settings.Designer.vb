@@ -57,7 +57,7 @@ Namespace My
         <Global.System.Configuration.ApplicationScopedSettingAttribute(),  _
          Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
          Global.System.Configuration.SpecialSettingAttribute(Global.System.Configuration.SpecialSetting.WebServiceUrl),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("https://wsaa.afip.gov.ar/ws/services/LoginCms")>  _
+         Global.System.Configuration.DefaultSettingValueAttribute("https://wsaahomo.afip.gov.ar/ws/services/LoginCms")>  _
         Public ReadOnly Property NegocioSiCoFa_ar_gov_afip_wsaa_LoginCMSService() As String
             Get
                 Return CType(Me("NegocioSiCoFa_ar_gov_afip_wsaa_LoginCMSService"),String)

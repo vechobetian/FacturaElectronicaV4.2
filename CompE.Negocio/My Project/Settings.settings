@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="NegocioSiCoFa_ar_gov_afip_wsaa_LoginCMSService" Type="(Web Service URL)" Scope="Application">
-      <Value Profile="(Default)">https://wsaa.afip.gov.ar/ws/services/LoginCms</Value>
+      <Value Profile="(Default)">https://wsaahomo.afip.gov.ar/ws/services/LoginCms</Value>
     </Setting>
     <Setting Name="NegocioSiCoFa_ar_gov_afip_wswhomo_Service" Type="(Web Service URL)" Scope="Application">
       <Value Profile="(Default)">https://wswhomo.afip.gov.ar/wsfev1/service.asmx</Value>
