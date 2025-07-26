@@ -18,9 +18,7 @@ Public Class D_AdminClientes
                     cmd.Parameters.AddWithValue("@IdCliente", argIdCliente)
 
                     Using datosC As SqlDataReader = cmd.ExecuteReader()
-                        datosC.Read()
-
-                        If datosC.HasRows Then
+                        If datosC.Read() Then
                             Dim IdCliente As Long = datosC("IdCliente")
                             Dim IdGpoCli As Long = datosC("IdGpoCli")
                             Dim RazónSocial As String = datosC("RazónSocial")

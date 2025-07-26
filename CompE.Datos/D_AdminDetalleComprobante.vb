@@ -7,6 +7,8 @@ Public Class D_AdminDetalleComprobante
         Select Case argCodiTC
             Case "REC"
                 ObtenerDetalle = ObtenerDetalleR(argIdOperacion, argDisIva)
+            Case "CP"
+                ObtenerDetalle = ObtenerDetalleCP(argIdOperacion, argDisIva)
             Case Else
                 ObtenerDetalle = ObtenerDetalleC(argIdOperacion, argDisIva)
         End Select
@@ -95,6 +97,58 @@ Public Class D_AdminDetalleComprobante
 
         Catch ex As Exception
             Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerDetalleR", ex.Message))
+            Return Nothing
+        End Try
+
+    End Function
+
+    Private Function ObtenerDetalleCP(ByVal argIdOperacion As Long, ByVal argDisIVA As Boolean) As List(Of ItemComprobante)
+        Dim objDetCP As New List(Of ItemComprobante)
+        Dim objItemCP As ItemComprobante = Nothing
+        Dim TipoOperacion As String
+        Dim Importe As Decimal
+        Dim PuntosCancelados As Decimal
+        Dim PrecioUnitarioPunto As Decimal
+        Dim Resumen As String
+
+        Try
+            Dim sql As String = "SELECT TipoOperación,Resu,Cliente,Importe,Puntos FROM ConDetPuntos WHERE IdOperación=@IdOperacion"
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
+
+                Using cmd As SqlCommand = cn.CreateCommand()
+
+                    cmd.CommandType = CommandType.Text
+                    cmd.CommandText = sql
+                    cmd.Parameters.AddWithValue("@IdOperacion", argIdOperacion)
+
+                    Using datos As SqlDataReader = cmd.ExecuteReader()
+
+                        datos.Read()
+                        TipoOperacion = datos("TipoOperación")
+                        Importe = -datos("Importe")
+                        PuntosCancelados = -datos("Puntos")
+                        PrecioUnitarioPunto = Math.Round(Importe / PuntosCancelados, 2, MidpointRounding.ToEven)
+                        Resumen = Left(datos("Resu"), 2) & "/" & Right(datos("Resu"), 2)
+
+                    End Using
+                End Using
+            End Using
+
+
+            objItemCP = New ItemComprobante(TipoOperacion, 0, 0, 0, argDisIVA, 0, 0, "")
+            objDetCP.Add(objItemCP)
+            objItemCP = New ItemComprobante("Puntos Cancelados: " & Math.Round(PuntosCancelados, 2, MidpointRounding.ToEven).ToString("N2"), 1, PuntosCancelados, 0, argDisIVA, 0, 0, "")
+            objDetCP.Add(objItemCP)
+            objItemCP = New ItemComprobante("Pcio. Unit. Punto: $" & Math.Round(PrecioUnitarioPunto, 2, MidpointRounding.ToEven).ToString("N2"), 1, PrecioUnitarioPunto, 0, argDisIVA, 0, 0, "")
+            objDetCP.Add(objItemCP)
+            objItemCP = New ItemComprobante("Importe Cancelado: $" & Math.Round(Importe, 2, MidpointRounding.ToEven).ToString("N2"), 1, Importe, 0, argDisIVA, 0, 0, "")
+            objDetCP.Add(objItemCP)
+
+            Return objDetCP
+
+        Catch ex As Exception
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerDetalleCP", ex.Message))
             Return Nothing
         End Try
 

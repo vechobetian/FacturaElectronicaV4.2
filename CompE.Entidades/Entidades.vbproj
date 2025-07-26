@@ -98,6 +98,7 @@
     <Compile Include="ParametrosTerminal.vb" />
     <Compile Include="QRCompE.vb" />
     <Compile Include="TipoComprobante.vb" />
+    <Compile Include="FarmaPuntos.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

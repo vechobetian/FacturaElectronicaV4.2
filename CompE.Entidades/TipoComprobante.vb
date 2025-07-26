@@ -60,6 +60,9 @@
             Case "RTO"
                 Return "REMITO"
 
+            Case "CP"
+                Return "CANCELACION FARMA PUNTOS"
+
             Case Else
                 Return "DESCONOCIDO"
         End Select

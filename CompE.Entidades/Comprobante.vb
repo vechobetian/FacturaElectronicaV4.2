@@ -21,6 +21,8 @@
     Property Detalle As List(Of ItemComprobante)
     Property DetalleRtas As List(Of ItemComprobanteRecetas)
     Property QR As QRCompE
+    Property FarmaPuntos As FarmaPuntos
+
     Public Sub New(
                   ByVal argOpera As Operacion,
                   ByVal argCodiTC_SiCoFa As String,
@@ -42,7 +44,8 @@
                   ByVal argCompAsoc As Comprobante,
                   ByVal argEmpresa As Empresa,
                   ByVal argDetalle As List(Of ItemComprobante),
-                  ByVal argDetalleRtas As List(Of ItemComprobanteRecetas)
+                  ByVal argDetalleRtas As List(Of ItemComprobanteRecetas),
+                  ByVal argFarmaPuntos As FarmaPuntos
                   )
         Me.Operacion = argOpera
         Me.TipoComprobante = New TipoComprobante(argCodiTC_SiCoFa)
@@ -65,7 +68,7 @@
         Me.Empresa = argEmpresa
         Me.Detalle = argDetalle
         Me.DetalleRtas = argDetalleRtas
-
+        Me.FarmaPuntos = argFarmaPuntos
     End Sub
 
 End Class

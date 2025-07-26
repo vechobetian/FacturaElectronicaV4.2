@@ -140,11 +140,17 @@ Public Class D_AdminComprobantes
                 objCAE = New CAE(NumComp, CAE, VtoCAE)
             End If
 
+            Dim objFP As FarmaPuntos = Nothing
+
+            If objCli.IdCliente > 0 Then
+                objFP = Me.ObtenerFarmaPuntos(argOperacion.IdOperacion)
+            End If
+
             If IdOperAsoc > 0 Then
                 Dim objCompAsoc As Comprobante = ObtenerComprobanteAsoc(IdOperAsoc)
-                objCbte = New Comprobante(argOperacion, CodiTC, PrefComp, NumComp, FechaComp, ImpBto, ImpEx, ImpGrav, ImpNeto, ImpIVA, ImpOS, ImpEf, ImpCC, ImpTar, ImpDes, objCAE, objCli, objCompAsoc, objEmpr, objDetalleC, objDetalleR)
+                objCbte = New Comprobante(argOperacion, CodiTC, PrefComp, NumComp, FechaComp, ImpBto, ImpEx, ImpGrav, ImpNeto, ImpIVA, ImpOS, ImpEf, ImpCC, ImpTar, ImpDes, objCAE, objCli, objCompAsoc, objEmpr, objDetalleC, objDetalleR, objFP)
             Else
-                objCbte = New Comprobante(argOperacion, CodiTC, PrefComp, NumComp, FechaComp, ImpBto, ImpEx, ImpGrav, ImpNeto, ImpIVA, ImpOS, ImpEf, ImpCC, ImpTar, ImpDes, objCAE, objCli, Nothing, objEmpr, objDetalleC, objDetalleR)
+                objCbte = New Comprobante(argOperacion, CodiTC, PrefComp, NumComp, FechaComp, ImpBto, ImpEx, ImpGrav, ImpNeto, ImpIVA, ImpOS, ImpEf, ImpCC, ImpTar, ImpDes, objCAE, objCli, Nothing, objEmpr, objDetalleC, objDetalleR, objFP)
             End If
 
             Return objCbte
@@ -156,6 +162,7 @@ Public Class D_AdminComprobantes
         End Try
 
     End Function
+
     Private Function ObtenerComprobanteAsoc(ByVal argIdOperAsoc As Long) As Comprobante
 
         Try
@@ -242,7 +249,7 @@ Public Class D_AdminComprobantes
             If CAE <> "" Then
                 objCAE = New CAE(NumComp, CAE, VtoCAE)
             End If
-            objCbte = New Comprobante(objOperaAsoc, CodiTC, PrefComp, NumComp, FechaComp, ImpBto, ImpEx, ImpGrav, ImpNeto, ImpIVA, ImpOS, ImpEf, ImpCC, ImpTar, ImpDes, objCAE, objCli, Nothing, objEmpr, objDetalleC, objDetalleR)
+            objCbte = New Comprobante(objOperaAsoc, CodiTC, PrefComp, NumComp, FechaComp, ImpBto, ImpEx, ImpGrav, ImpNeto, ImpIVA, ImpOS, ImpEf, ImpCC, ImpTar, ImpDes, objCAE, objCli, Nothing, objEmpr, objDetalleC, objDetalleR, Nothing)
             Return objCbte
 
         Catch ex As Exception
@@ -291,6 +298,51 @@ Public Class D_AdminComprobantes
             Return Nothing
         End Try
     End Function
+
+    Public Function ObtenerFarmaPuntos(ByVal argIdOperacion As Long) As FarmaPuntos
+
+        Try
+            Dim objFP As FarmaPuntos = Nothing
+
+            Dim sql As String = "SELECT IdOperación,IdCliente,Puntos,Importe,Vence,PuntosAcum,ImporteAcum FROM TblOperaPuntos WHERE IdOperación=@IdOperacion"
+
+            Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
+                cn.Open()
+
+                Using cmd As SqlCommand = cn.CreateCommand()
+                    cmd.CommandType = CommandType.Text
+                    cmd.CommandText = sql
+                    cmd.Parameters.AddWithValue("@IdOperacion", argIdOperacion)
+
+                    Using datos As SqlDataReader = cmd.ExecuteReader()
+                        If datos.Read() Then
+                            Dim idOperacion As Long = Convert.ToInt64(datos("IdOperación"))
+                            Dim idCliente As Long = Convert.ToInt64(datos("IdCliente"))
+                            Dim puntos As Decimal = Convert.ToDecimal(datos("Puntos"))
+                            Dim importe As Decimal = Convert.ToDecimal(datos("Importe"))
+                            Dim vencimiento As Date = Convert.ToDateTime(datos("Vence"))
+                            Dim puntosAcumulados As Decimal = Convert.ToDecimal(datos("PuntosAcum"))
+                            Dim importeAcumulado As Decimal = Convert.ToDecimal(datos("ImporteAcum"))
+                            objFP = New FarmaPuntos(idOperacion, idCliente, puntos, importe, vencimiento, puntosAcumulados, importeAcumulado)
+                        End If
+
+                    End Using
+
+                End Using
+
+            End Using
+
+            Return objFP
+
+        Catch ex As Exception
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerFarmaPuntos", ex.Message))
+            Return Nothing
+
+        End Try
+
+    End Function
+
+
     Private Function DisIva(argCodiTC_SiCoFa As String) As Boolean
         Select Case argCodiTC_SiCoFa
             Case "FAA", "NCA", "FAM", "NCM"
