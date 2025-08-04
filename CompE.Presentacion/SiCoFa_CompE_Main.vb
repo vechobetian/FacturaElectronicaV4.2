@@ -9,10 +9,10 @@ Module SiCoFa_CompE_Main
     Private mobjCbte As Comprobante
     Public Sub Main(ByVal cmdArgs() As String)
 
-        Dim IdOpera As Long
-        Dim Hoja As String = ""
-        Dim NumCopias As Integer
-        Dim Email As String = ""
+        Dim IdOpera As Long = 274281
+        Dim Hoja As String = "TK"
+        Dim NumCopias As Integer = 1
+        Dim Email As String = "NO"
 
         Try
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
