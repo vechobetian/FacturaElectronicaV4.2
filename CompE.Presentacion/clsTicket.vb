@@ -624,21 +624,23 @@ Public Class clsTicket
 
         Next
 
-        yPos += IncrementoYPreLinea + 5
-        e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
+        'yPos += IncrementoYPreLinea + 5
+        'e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
 
-        yPos += 50
-        e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
-        yPos += 15
-        e.Graphics.DrawString("                  FIRMA               ", printFont, Brushes.Black, MargenIzquierdo, yPos)
-        yPos += 30
-        e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
-        yPos += 15
-        e.Graphics.DrawString("                ACLARACIÓN            ", printFont, Brushes.Black, MargenIzquierdo, yPos)
-        yPos += 30
-        e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
-        yPos += 15
-        e.Graphics.DrawString("                  D.N.I               ", printFont, Brushes.Black, MargenIzquierdo, yPos)
+        If Copia.Trim = "DUPLICADO" Then
+            yPos += 50
+            e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
+            yPos += 15
+            e.Graphics.DrawString("                  FIRMA               ", printFont, Brushes.Black, MargenIzquierdo, yPos)
+            yPos += 30
+            e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
+            yPos += 15
+            e.Graphics.DrawString("                ACLARACIÓN            ", printFont, Brushes.Black, MargenIzquierdo, yPos)
+            yPos += 30
+            e.Graphics.DrawString(Linea, printFont, Brushes.Black, MargenIzquierdo, yPos)
+            yPos += 15
+            e.Graphics.DrawString("                  D.N.I               ", printFont, Brushes.Black, MargenIzquierdo, yPos)
+        End If
 
         If Comprobante.Operacion.Observaciones <> "" Then
             Dim intNumCarRestantes As Integer

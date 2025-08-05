@@ -128,7 +128,7 @@ Public Class D_AdminDetalleComprobante
                         TipoOperacion = datos("TipoOperación")
                         Importe = -datos("Importe")
                         PuntosCancelados = -datos("Puntos")
-                        PrecioUnitarioPunto = Math.Round(Importe / PuntosCancelados, 2, MidpointRounding.ToEven)
+                        'PrecioUnitarioPunto = Math.Round(Importe / PuntosCancelados, 2, MidpointRounding.ToEven)
                         Resumen = Left(datos("Resu"), 2) & "/" & Right(datos("Resu"), 2)
 
                     End Using
@@ -140,8 +140,8 @@ Public Class D_AdminDetalleComprobante
             objDetCP.Add(objItemCP)
             objItemCP = New ItemComprobante("Puntos Cancelados: " & Math.Round(PuntosCancelados, 2, MidpointRounding.ToEven).ToString("N2"), 1, PuntosCancelados, 0, argDisIVA, 0, 0, "")
             objDetCP.Add(objItemCP)
-            objItemCP = New ItemComprobante("Pcio. Unit. Punto: $" & Math.Round(PrecioUnitarioPunto, 2, MidpointRounding.ToEven).ToString("N2"), 1, PrecioUnitarioPunto, 0, argDisIVA, 0, 0, "")
-            objDetCP.Add(objItemCP)
+            'objItemCP = New ItemComprobante("Pcio. Unit. Punto: $" & Math.Round(PrecioUnitarioPunto, 2, MidpointRounding.ToEven).ToString("N2"), 1, PrecioUnitarioPunto, 0, argDisIVA, 0, 0, "")
+            'objDetCP.Add(objItemCP)
             objItemCP = New ItemComprobante("Importe Cancelado: $" & Math.Round(Importe, 2, MidpointRounding.ToEven).ToString("N2"), 1, Importe, 0, argDisIVA, 0, 0, "")
             objDetCP.Add(objItemCP)
 
