@@ -2,6 +2,7 @@
 Imports System.Text
 Public Class ParametrosTerminal
     ReadOnly Property PathServer As String
+    ReadOnly Property ServerSql As String
     Property MacAddress As String
     Property IdPc As String
     Property Impresora As String
