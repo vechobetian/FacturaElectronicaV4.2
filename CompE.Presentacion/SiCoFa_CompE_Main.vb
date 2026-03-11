@@ -113,6 +113,7 @@ Module SiCoFa_CompE_Main
     Private Function GenerarFacturaElectronica() As Boolean
 
         Try
+
             If SolicitarCAE() = True Then
                 GenerarQR()
                 Return True
