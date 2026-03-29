@@ -30,6 +30,6 @@ Imports System.Runtime.InteropServices
 ' Puede especificar todos los valores o usar los valores predeterminados de número de compilación y de revisión
 ' utilizando el carácter "*", como se muestra a continuación:
 
-<Assembly: AssemblyVersion("4.2.0.1")>
-<Assembly: AssemblyFileVersion("4.2.0.1")>
+<Assembly: AssemblyVersion("4.2.0.2")>
+<Assembly: AssemblyFileVersion("4.2.0.2")>
 <Assembly: NeutralResourcesLanguage("es-AR")>

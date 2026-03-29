@@ -1,7 +1,7 @@
 ﻿Imports System.Runtime.InteropServices
 Imports System.Text
 Public Class ParametrosTerminal
-    ReadOnly Property PathServer As String
+    'ReadOnly Property PathServer As String 'Obsoleto se utiliza en version 4.0
     ReadOnly Property ServerSql As String
     Property MacAddress As String
     Property IdPc As String
@@ -25,7 +25,8 @@ Public Class ParametrosTerminal
     End Sub
     Public Sub New()
 
-        Me.PathServer = ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS")
+        'Me.PathServer = ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS") 'obsoleto se utiliza en version 4.0
+        Me.ServerSql = ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strServerSQL")
 
     End Sub
 
