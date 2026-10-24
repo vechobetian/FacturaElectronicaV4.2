@@ -61,6 +61,7 @@
     <Compile Include="D_AdminDetalleComprobante.vb" />
     <Compile Include="D_AdminEmpresa.vb" />
     <Compile Include="D_AdminOperaciones.vb" />
+    <Compile Include="D_AdminRecetas.vb" />
     <Compile Include="mod_D_Admin.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>

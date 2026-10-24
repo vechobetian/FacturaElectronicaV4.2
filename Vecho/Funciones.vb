@@ -272,4 +272,27 @@ Public Module Funciones
         Return msj
 
     End Function
+
+    Public Function ObtenerPathServidor() As String
+        Dim path As String = System.Configuration.ConfigurationManager.AppSettings("strPathS")
+        If String.IsNullOrEmpty(path) Then
+            path = "C:\" ' Fallback de seguridad
+        End If
+        Return path
+    End Function
+
+    Public Function ObtenerImpresoraFE() As String
+        Dim impresora As String = System.Configuration.ConfigurationManager.AppSettings("strImpresoraFE")
+        If impresora Is Nothing Then
+            impresora = ""
+        End If
+        Return impresora
+    End Function
+
+    Public Function ObtenerServerSQL() As String
+        Dim server As String = System.Configuration.ConfigurationManager.AppSettings("strServerSQL")
+        If String.IsNullOrEmpty(server) Then server = "localhost"
+        Return server
+    End Function
+
 End Module

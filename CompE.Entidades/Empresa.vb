@@ -10,6 +10,8 @@
     Property IVADescripcion As String
     Property InicioActividad As String
     Property GLN As String
+    Property CUFE As String
+
     Public Sub New(
                   ByVal argNombre As String,
                   ByVal argDomicilio As String,
@@ -20,7 +22,8 @@
                   ByVal argIB As String,
                   ByVal argIVA As String,
                   ByVal argInicioActividad As String,
-                  ByVal argGLN As String
+                  ByVal argGLN As String,
+                  ByVal argCUFE As String
                   )
 
 
@@ -35,6 +38,7 @@
         Me.IVADescripcion = ObtenerTipoIVA()
         Me.InicioActividad = argInicioActividad
         Me.GLN = argGLN
+        Me.CUFE = argCUFE
 
     End Sub
     Private Function ObtenerTipoIVA() As String

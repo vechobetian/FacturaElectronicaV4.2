@@ -4,7 +4,7 @@ Module Mod_D_Admin
 
         Dim PaTer As New ParametrosTerminal
 
-        Dim Servidor As String = PaTer.ServerSql
+        Dim Servidor As String = Vecho.ObtenerServerSQL
         Dim Usuario As String = "usuario_sicofa"
         Dim Clave As String = "vecho"
 

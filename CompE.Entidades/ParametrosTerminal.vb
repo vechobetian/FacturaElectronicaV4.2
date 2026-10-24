@@ -23,12 +23,5 @@ Public Class ParametrosTerminal
     Public Shared Sub WriteINI(ByVal File As String, ByVal Section As String, ByVal Key As String, ByVal Value As String)
         WritePrivateProfileString(Section, Key, Value, File)
     End Sub
-    Public Sub New()
-
-        'Me.PathServer = ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS") 'obsoleto se utiliza en version 4.0
-        Me.ServerSql = ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strServerSQL")
-
-    End Sub
-
 
 End Class

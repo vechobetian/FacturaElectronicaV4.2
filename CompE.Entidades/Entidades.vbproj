@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CAE.vb" />
+    <Compile Include="ImedModelos.vb" />
     <Compile Include="Email.vb" />
     <Compile Include="Cliente.vb" />
     <Compile Include="Comprobante.vb" />

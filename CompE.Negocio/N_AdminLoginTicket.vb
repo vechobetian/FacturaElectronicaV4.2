@@ -5,12 +5,15 @@ Imports System.Security.Cryptography.Pkcs
 Imports System.Security.Cryptography.X509Certificates
 Imports System.Text
 Imports System.Xml
+Imports System.Configuration
 Imports SiCoFa.Entidades
+
 Public Class N_AdminLoginTicket
+
     Property CertFirmante As X509Certificate2
     Property TicketAcceso As LoginTicket
 
-    Private mstrPathServidor As String = ParametrosTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS")
+    Private mstrPathServidor As String = ObtenerRutaServidor()
     Private XmlLoginTicketResponse As XmlDocument = Nothing
     Private mstrPasswordSecureString As New SecureString
     Private mstrProxy As String = Nothing
@@ -18,11 +21,20 @@ Public Class N_AdminLoginTicket
     Private mstrProxyPassword As String = ""
     Private mstrServicio As String = "wsfe"
     Private mstrRutaCertX509Firmante As String
-    Private mstrRutaTA As String = mstrPathServidor & "\SiCoFa_Server\CompE\TA.txt"
+    Private mstrRutaTA As String = Path.Combine(mstrPathServidor, "SiCoFa_Server\CompE\TA.txt")
     Private XmlLoginTicketRequest As XmlDocument = Nothing
     Private URLWsaa As String
     Private ReadOnly XmlStrLoginTicketRequestTemplate As String = "<loginTicketRequest><header><uniqueId></uniqueId><generationTime></generationTime><expirationTime></expirationTime></header><service></service></loginTicketRequest>"
     Private Shared _globalUniqueID As UInt32 = 0 ' OJO! NO ES THREAD-SAFE
+
+    Private Function ObtenerRutaServidor() As String
+        Dim pathServidor As String = ConfigurationManager.AppSettings("strPathS")
+        If String.IsNullOrEmpty(pathServidor) Then
+            pathServidor = "C:\" ' Fallback de seguridad
+        End If
+        Return pathServidor
+    End Function
+
     Public Function AccesoAlWSN(ByVal argEmpCUIT As String) As Boolean
 
         If argEmpCUIT = "20210362712" Then
@@ -31,10 +43,12 @@ Public Class N_AdminLoginTicket
             URLWsaa = "https://wsaa.afip.gov.ar/ws/services/LoginCms?WSDL" 'URL WSAA Produccion 
         End If
 
-        If File.Exists(mstrPathServidor & "SiCoFa_Server\CompE\CFESICOFA" & Replace(argEmpCUIT, "-", "") & ".pfx") Then
-            mstrRutaCertX509Firmante = mstrPathServidor & "SiCoFa_Server\CompE\CFESICOFA" & Replace(argEmpCUIT, "-", "") & ".pfx"
+        Dim rutaPfx As String = Path.Combine(mstrPathServidor, "SiCoFa_Server\CompE\CFESICOFA" & Replace(argEmpCUIT, "-", "") & ".pfx")
+
+        If File.Exists(rutaPfx) Then
+            mstrRutaCertX509Firmante = rutaPfx
         Else
-            Throw New Exception(vecho.MensajeError(Me.ToString, "AccesoAlWSN", "No existe certificado digital"))
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "AccesoAlWSN", "No existe certificado digital en: " & rutaPfx))
         End If
 
         Try
@@ -46,11 +60,12 @@ Public Class N_AdminLoginTicket
             Return True
 
         Catch ex As Exception
-            Throw New Exception(vecho.MensajeError(Me.ToString, "AccesoALWSN", ex.Message))
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "AccesoALWSN", ex.Message))
             Return False
         End Try
 
     End Function
+
     Private Function VerificarTA() As Boolean
 
         Try
@@ -84,11 +99,12 @@ Public Class N_AdminLoginTicket
             End If
 
         Catch ex As Exception
-            Throw New Exception(vecho.MensajeError(Me.ToString, "VerificarTA", ex.Message))
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "VerificarTA", ex.Message))
             Return False
         End Try
 
     End Function
+
     Private Function ObtenerLoginTicket() As Boolean
 
         Dim cmsFirmadoBase64 As String
@@ -115,7 +131,7 @@ Public Class N_AdminLoginTicket
             xmlNodoService.InnerText = mstrServicio
 
         Catch excepcionAlGenerarLoginTicketRequest As Exception
-            Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerLoginTicket PASO 1", excepcionAlGenerarLoginTicketRequest.Message))
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerLoginTicket PASO 1", excepcionAlGenerarLoginTicketRequest.Message))
         End Try
 
         ' PASO 2: Firmo el Login Ticket Request
@@ -130,7 +146,7 @@ Public Class N_AdminLoginTicket
             cmsFirmadoBase64 = Convert.ToBase64String(encodedSignedCms)
 
         Catch excepcionAlFirmar As Exception
-            Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerLoginTicket PASO 2", excepcionAlFirmar.Message))
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerLoginTicket PASO 2", excepcionAlFirmar.Message))
         End Try
 
         ' PASO 3: Invoco al WSAA para obtener el Login Ticket Response
@@ -149,10 +165,16 @@ Public Class N_AdminLoginTicket
             End If
 
             loginTicketResponse = servicioWsaa.loginCms(cmsFirmadoBase64)
+
+            ' Asegurar que el directorio destino exista antes de guardar el TA
+            Dim carpetaTA As String = Path.GetDirectoryName(mstrRutaTA)
+            If Not Directory.Exists(carpetaTA) Then
+                Directory.CreateDirectory(carpetaTA)
+            End If
             File.WriteAllText(mstrRutaTA, loginTicketResponse)
 
         Catch excepcionAlInvocarWsaa As Exception
-            Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerLoginTicket PASO 3", excepcionAlInvocarWsaa.Message))
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerLoginTicket PASO 3", excepcionAlInvocarWsaa.Message))
 
         End Try
 
@@ -171,34 +193,32 @@ Public Class N_AdminLoginTicket
             End With
 
         Catch excepcionAlAnalizarLoginTicketResponse As Exception
-            Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerLoginTicket PASO 4", excepcionAlAnalizarLoginTicketResponse.Message))
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerLoginTicket PASO 4", excepcionAlAnalizarLoginTicketResponse.Message))
 
         End Try
 
         Return True
 
     End Function
+
     Private Function FirmarBytesMensaje(ByVal argBytesMsg As Byte(), ByVal argCertFirmante As X509Certificate2) As Byte()
 
         Try
-            ' Pongo el mensaje en un objeto ContentInfo (requerido para construir el obj SignedCms)
             Dim infoContenido As New ContentInfo(argBytesMsg)
             Dim cmsFirmado As New SignedCms(infoContenido)
 
-            ' Creo objeto CmsSigner que tiene las caracteristicas del firmante
             Dim cmsFirmante As New CmsSigner(argCertFirmante)
             cmsFirmante.IncludeOption = X509IncludeOption.EndCertOnly
 
-            ' Firmo el mensaje PKCS #7
             cmsFirmado.ComputeSignature(cmsFirmante)
 
-            ' Encodeo el mensaje PKCS #7.
             Return cmsFirmado.Encode()
         Catch excepcionAlFirmar As Exception
-            Throw New Exception(vecho.MensajeError(Me.ToString, "FirmarBytesMensaje", excepcionAlFirmar.Message))
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "FirmarBytesMensaje", excepcionAlFirmar.Message))
             Return Nothing
         End Try
     End Function
+
     Private Function ObtenerCertificadoDesdeArchivo(ByVal argArchivo As String, ByVal argPassword As SecureString) As X509Certificate2
 
         Try
@@ -210,7 +230,7 @@ Public Class N_AdminLoginTicket
             End If
             Return objCert
         Catch excepcionAlImportarCertificado As Exception
-            Throw New Exception(vecho.MensajeError(Me.ToString, "ObtenerCertificadoDesdeArchivo", excepcionAlImportarCertificado.Message))
+            Throw New Exception(Vecho.MensajeError(Me.ToString, "ObtenerCertificadoDesdeArchivo", excepcionAlImportarCertificado.Message))
             Return Nothing
         End Try
     End Function

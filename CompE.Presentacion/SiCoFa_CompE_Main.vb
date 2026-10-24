@@ -1,12 +1,16 @@
 ﻿Imports System.Net
 Imports System.IO
+Imports System.Configuration ' <-- NUEVO (Asegúrate de agregar la referencia en el proyecto)
 Imports SiCoFa.Entidades
 Imports SiCoFa.Negocio
+
 Module SiCoFa_CompE_Main
 
+    ' 2. Declaración de variables privadas para la clase
     Private mobjN_AdminOpera As N_AdminOperaciones
     Private mobjN_AdminCbtes As N_AdminComprobantes
     Private mobjCbte As Comprobante
+
     Public Sub Main(ByVal cmdArgs() As String)
 
         Dim IdOpera As Long
@@ -15,6 +19,14 @@ Module SiCoFa_CompE_Main
         Dim Email As String = ""
 
         Try
+            ' 1. Leemos TODOS los parámetros del INI de VB6 en el arranque
+            Dim rutaServidorIni As String = ParametrosTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strPathS")
+            Dim impresoraIni As String = ParametrosTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strImpresoraFE")
+            Dim serverSqlIni As String = ParametrosTerminal.ReadINI("C:\SiCoFa_Cliente\config.ini", "SiCoFa", "strServerSQL")
+
+            ' 2. Los guardamos en el app.config (memoria) de un solo golpe
+            SincronizarAppConfig(rutaServidorIni, impresoraIni, serverSqlIni)
+
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
 
             For argNum As Integer = 0 To UBound(cmdArgs, 1)
@@ -51,7 +63,7 @@ Module SiCoFa_CompE_Main
             mobjCbte = mobjN_AdminCbtes.ObtenerComprobante(objOpera)
 
             If mobjCbte Is Nothing Then
-                Throw New Exception(vecho.MensajeError("SiCoFa_CompE_Main", "Main", "Comprobante no encontrado"))
+                Throw New Exception(Vecho.MensajeError("SiCoFa_CompE_Main", "Main", "Comprobante no encontrado"))
             End If
 
             If mobjCbte.NumComp = "E" Then
@@ -61,14 +73,10 @@ Module SiCoFa_CompE_Main
 
                 mobjN_AdminCbtes.ActualizarComprobante(mobjCbte)
 
-                'mobjN_AdminOpera.RegistrarFinalizado(mobjCbte.Operacion)
+                ' --- Integración con IMED ---
+                Dim adminImed As New N_AdminIMED()
+                adminImed.ProcesarDeclaracionDispensa(objOpera, mobjCbte)
 
-                'Select Case mobjCbte.Operacion.CodiTO
-                'Case "VTAM", "INTF"
-                'mobjN_AdminOpera.ActualizarStock(mobjCbte.Operacion, -1)
-                'Case "NC"
-                'mobjN_AdminOpera.ActualizarStock(mobjCbte.Operacion, 1)
-                'End Select
             Else
                 GenerarQR()
             End If
@@ -100,7 +108,7 @@ Module SiCoFa_CompE_Main
             Dim msjMostrar As String = ex.Message
             Dim msjGuardar As String = Replace(msjMostrar, vbCrLf, "")
 
-            If mobjCbte.NumComp = "E" Then
+            If mobjCbte IsNot Nothing AndAlso mobjCbte.NumComp = "E" Then
                 mobjN_AdminCbtes.RegistrarError(IdOpera)
                 mobjN_AdminOpera.RegistrarError(IdOpera, msjGuardar)
             End If
@@ -110,27 +118,48 @@ Module SiCoFa_CompE_Main
         End Try
 
     End Sub
-    Private Function GenerarFacturaElectronica() As Boolean
 
+    Private Sub SincronizarAppConfig(ByVal ruta As String, ByVal impresora As String, ByVal serverSql As String)
         Try
+            Dim config As Configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None)
 
+            ActualizarClave(config, "strPathS", ruta)
+            ActualizarClave(config, "strImpresoraFE", impresora)
+            ActualizarClave(config, "strServerSQL", serverSql)
+
+            config.Save(ConfigurationSaveMode.Modified)
+            ConfigurationManager.RefreshSection("appSettings")
+        Catch ex As Exception
+            MsgBox("Error al sincronizar app.config: " & ex.Message, vbExclamation, "Configuración")
+        End Try
+    End Sub
+
+    Private Sub ActualizarClave(ByVal config As Configuration, ByVal clave As String, ByVal valor As String)
+        If config.AppSettings.Settings(clave) IsNot Nothing Then
+            If config.AppSettings.Settings(clave).Value <> valor Then
+                config.AppSettings.Settings(clave).Value = valor
+            End If
+        Else
+            config.AppSettings.Settings.Add(clave, valor)
+        End If
+    End Sub
+
+    Private Function GenerarFacturaElectronica() As Boolean
+        Try
             If SolicitarCAE() = True Then
                 GenerarQR()
                 Return True
             Else
                 Return False
             End If
-
         Catch ex As Exception
-            Throw New Exception(vecho.MensajeError("SiCoFa_CompE_Main", "GenerarFacturaElectronica", ex.Message))
+            Throw New Exception(Vecho.MensajeError("SiCoFa_CompE_Main", "GenerarFacturaElectronica", ex.Message))
             Return False
         End Try
-
     End Function
+
     Private Function SolicitarCAE() As Boolean
-
         Try
-
             Dim objN_AdminCAE As New N_AdminCAE
             mobjCbte.CAE = objN_AdminCAE.ObtenerCAE(mobjCbte)
 
@@ -140,18 +169,15 @@ Module SiCoFa_CompE_Main
             End If
 
             mobjCbte.NumComp = Format(mobjCbte.CAE.NumComp, "00000000")
-
             Return True
 
         Catch ex As Exception
-            Throw New Exception(vecho.MensajeError("SiCoFa_CompE_Main", "SolicitarCAE", ex.Message))
+            Throw New Exception(Vecho.MensajeError("SiCoFa_CompE_Main", "SolicitarCAE", ex.Message))
             Return False
-
         End Try
-
     End Function
-    Private Sub GenerarQR()
 
+    Private Sub GenerarQR()
         Try
             If mobjCbte.CAE IsNot Nothing Then
                 Dim CUIT As Long = CLng(Replace(mobjCbte.Empresa.CUIT, "-", ""))
@@ -159,15 +185,13 @@ Module SiCoFa_CompE_Main
                 Dim NumComp As Long = CLng(mobjCbte.NumComp)
 
                 mobjCbte.QR = New QRCompE(mobjCbte.FechaComp, CUIT, PVta, mobjCbte.TipoComprobante.CodiTC_AFIP, NumComp, mobjCbte.ImpBto, mobjCbte.Cliente.CodiTD_AFIP, mobjCbte.Cliente.NumDoc, mobjCbte.CAE.NumCAE)
-
             End If
-
         Catch ex As Exception
-            Throw New Exception(vecho.MensajeError("SiCoFa_CompE_Main", "GenerarQR", ex.Message))
+            Throw New Exception(Vecho.MensajeError("SiCoFa_CompE_Main", "GenerarQR", ex.Message))
         End Try
     End Sub
-    Private Sub pdfA4(Path As String)
 
+    Private Sub pdfA4(Path As String)
         Try
             Dim objPdf As New clsGenerarPDF
             With objPdf
@@ -188,7 +212,7 @@ Module SiCoFa_CompE_Main
                 End If
 
                 If mobjCbte.TipoComprobante.CodiTC_SiCoFa = "REC" Then
-                    .CantiLetras = UCase(vecho.NumEnLetras(mobjCbte.ImpBto))
+                    .CantiLetras = UCase(Vecho.NumEnLetras(mobjCbte.ImpBto))
                 End If
 
                 .Path = Path
@@ -199,6 +223,7 @@ Module SiCoFa_CompE_Main
             Throw ex
         End Try
     End Sub
+
     Private Sub ImprimirA4(ByVal argNumCopias As Integer)
         Dim objImp As New clsImprimir
         Dim Copia As String = ""
@@ -273,8 +298,8 @@ Module SiCoFa_CompE_Main
         objImp.Dispose()
 
     End Sub
-    Private Sub ImprimirTK(ByVal argNumCopias As Integer)
 
+    Private Sub ImprimirTK(ByVal argNumCopias As Integer)
         Try
             Dim objTkt As New clsTicket
             Dim Copia As String = ""
@@ -310,8 +335,8 @@ Module SiCoFa_CompE_Main
             MsgBox(ex.Message)
         End Try
     End Sub
-    Private Sub ImprimirTK58(ByVal argNumCopias As Integer)
 
+    Private Sub ImprimirTK58(ByVal argNumCopias As Integer)
         Try
             Dim objTkt As New clsTicket58
             Dim Copia As String = ""
@@ -347,12 +372,10 @@ Module SiCoFa_CompE_Main
             Throw ex
         End Try
     End Sub
+
     Private Sub EnviarMail()
-
         Dim PathAdjunto As String = "C:\SiCoFa_Cliente\Temp\" & mobjCbte.TipoComprobante.CodiTC_SiCoFa & "-" & mobjCbte.PuntoVta & "-" & mobjCbte.NumComp & ".pdf"
-
         Try
-
             Dim objEmail As New clsEmail
 
             If objEmail.ObtenerEmailEmpresa() = False Then
@@ -361,10 +384,7 @@ Module SiCoFa_CompE_Main
             End If
 
             If objEmail.Email Is Nothing Then
-                MessageBox.Show("No se pudo obtener los parametros para enviar el Email",
-                            "SiCoFa",
-                             MessageBoxButtons.OK)
-
+                MessageBox.Show("No se pudo obtener los parametros para enviar el Email", "SiCoFa", MessageBoxButtons.OK)
                 Exit Sub
             End If
 
@@ -385,13 +405,11 @@ Module SiCoFa_CompE_Main
 
         Catch ex As Exception
             MsgBox(ex.Message) 'no hago Throw ex porque me registra error en la base de datos
-
         End Try
-
     End Sub
+
     Private Sub GuardarComo()
         Dim saveFileDialog1 As New SaveFileDialog()
-
         Try
             With saveFileDialog1
                 .Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*"
@@ -408,7 +426,6 @@ Module SiCoFa_CompE_Main
         Catch ex As Exception
             MsgBox(ex.Message)
         End Try
-
     End Sub
 
 End Module
