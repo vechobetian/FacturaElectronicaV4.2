@@ -1,23 +1,74 @@
-﻿Imports System.Net.Http
-Imports System.Net.Http.Headers
-Imports System.Text
+﻿Imports System.IO
+Imports System.Net
+Imports System.Net.Http
 Imports System.Web.Script.Serialization
+Imports SiCoFa.Datos
 Imports SiCoFa.Entidades
 
 Public Class N_AdminIMED
 
-    ' Endpoints oficiales para Homologación y Producción
-    Private Const URL_HOMO_TOKEN As String = "https://homo.imed-sigedad.com/token"
-    Private Const URL_PROD_TOKEN As String = "https://ingest.imed-sigedad.com/token"
+    Private Const ARCHIVO_TOKEN As String = "imed_token.txt"
+    Private m_AdminDB As New D_AdminDB
 
-    Private Const URL_HOMO_INGEST As String = "https://homo.imed-sigedad.com/v2/ingest"
-    Private Const URL_PROD_INGEST As String = "https://ingest.imed-sigedad.com/v2/ingest"
+    Public Sub ProcesarDeclaracionDispensa(ByVal argOpera As Operacion, ByVal argCbte As Comprobante)
+        Try
+            ' 1. Definir entorno (Homologación o Producción según tu lógica de negocio)
+            Dim esHomologacion As Boolean = True ' Cambiar a False cuando pasen a producción
 
-    ''' <summary>
-    ''' Obtiene el Token JWT desde la API de IMED usando el GLN y la Clave de la farmacia.
-    ''' </summary>
-    Private Function ObtenerTokenJwt(ByVal gln As String, ByVal clave As String, ByVal esHomologacion As Boolean) As String
-        Dim urlToken As String = If(esHomologacion, URL_HOMO_TOKEN, URL_PROD_TOKEN)
+            ' 2. Obtener credenciales desde la empresa u operación
+            Dim glnFarmacia As String = argCbte.Empresa.GLN
+            Dim claveImed As String = "ClaveIMED"
+
+            ' 3. Obtener el Token JWT vigente (reutiliza el txt o pide uno nuevo)
+            Dim token As String = ObtenerTokenVigente(glnFarmacia, claveImed, esHomologacion)
+
+            ' 4. Armar el payload con los datos de la receta/dispensa
+            Dim jsonPayload As String = ConstruirJsonDispensa(argOpera, argCbte)
+
+            ' 5. Enviar la declaración a la API de IMED
+            EnviarDeclaracionAlServidor(jsonPayload, token, esHomologacion)
+
+        Catch ex As Exception
+            Throw New Exception("Error en dispensa IMED: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Function ObtenerTokenVigente(ByVal gln As String, ByVal clave As String, ByVal esHomologacion As Boolean) As String
+        Dim rutaToken As String = ObtenerRutaToken()
+
+        ' 1. Verificar si el archivo del token existe en el servidor
+        If File.Exists(rutaToken) Then
+            ' Margen de seguridad de 7 horas (el token dura 8)
+            Dim fechaCreacion As DateTime = File.GetLastWriteTime(rutaToken)
+            If DateTime.Now.Subtract(fechaCreacion).TotalHours < 7.0 Then
+                Dim tokenGuardado As String = File.ReadAllText(rutaToken).Trim()
+                If Not String.IsNullOrEmpty(tokenGuardado) Then
+                    Return tokenGuardado
+                End If
+            End If
+        End If
+
+        ' 2. Si no existe o expiró, lo solicitamos a la API de IMED
+        Dim nuevoToken As String = SolicitarTokenNuevoAlServidor(gln, clave, esHomologacion)
+
+        ' 3. Guardamos el nuevo token en el archivo txt del servidor
+        Dim carpetaDestino As String = Path.GetDirectoryName(rutaToken)
+        If Not Directory.Exists(carpetaDestino) Then
+            Directory.CreateDirectory(carpetaDestino)
+        End If
+        File.WriteAllText(rutaToken, nuevoToken)
+
+        Return nuevoToken
+    End Function
+
+    Private Function ObtenerRutaToken() As String
+        ' Utiliza la función centralizada de Vecho para leer la ruta desde la RAM
+        Dim pathServidor As String = Vecho.ObtenerPathServidor()
+        Return Path.Combine(pathServidor, "SiCoFa_Server\CompE", ARCHIVO_TOKEN)
+    End Function
+
+    Private Function SolicitarTokenNuevoAlServidor(ByVal gln As String, ByVal clave As String, ByVal esHomologacion As Boolean) As String
+        Dim urlToken As String = If(esHomologacion, "https://homo.imed-sigedad.com/token", "https://ingest.imed-sigedad.com/token")
 
         Using client As New HttpClient()
             client.DefaultRequestHeaders.Clear()
@@ -29,160 +80,154 @@ Public Class N_AdminIMED
 
             If response.IsSuccessStatusCode Then
                 Dim tokenJwt As String = response.Content.ReadAsStringAsync().Result
-                Return tokenJwt.Trim().Replace("""", "") ' Limpiamos comillas si el JSON viene plano
+                Return tokenJwt.Trim().Replace("""", "")
             Else
-                Throw New ErrorImedException("Error al autenticar en IMED (Código: " & CInt(response.StatusCode) & ")")
+                Throw New Exception("Error de autenticación IMED. Código: " & CInt(response.StatusCode))
             End If
         End Using
     End Function
 
-    Public Function ProcesarDeclaracionDispensa(ByVal objOpera As Operacion, ByVal cbte As Comprobante) As Boolean
-        Try
-            Dim estaHabilitado As Boolean = True
-            If Not estaHabilitado Then Return True
+    Private Function ObtenerIdMensaje() As Long
 
-            ' Definir entorno (True para Homologación, False para Producción)
-            Dim esHomologacion As Boolean = True
-            Dim urlImed As String = If(esHomologacion, URL_HOMO_INGEST, URL_PROD_INGEST)
+        Dim filtros As New Dictionary(Of String, Object) From {
+                                                               {"CodiAut", "SIGEDAD"}
+                                                              }
 
-            ' 1. Obtener credenciales de la farmacia desde el objeto o configuración
-            Dim glnFarmacia As String = cbte.Empresa.GLN.ToString() ' O ajusta según tu entidad
-            Dim claveFarmacia As String = "CLAVE_DE_FARMACIA" ' Cárgalo desde tu tabla de parámetros de la farmacia
+        ' Hace la lectura y la actualización en una sola operación segura
+        Return m_AdminDB.IncrementarYObtenerContador("TblAutorizadores", "UltiNumFil", filtros)
 
-            ' 2. Solicitar el Token JWT dinámicamente
-            Dim tokenImed As String = ObtenerTokenJwt(glnFarmacia, claveFarmacia, esHomologacion)
-
-            If String.IsNullOrEmpty(tokenImed) Then
-                Throw New Exception("No se pudo obtener un Token JWT válido de IMED.")
-            End If
-
-            ' 3. Formatear fechas 
-            Dim fechaCbteStr As String = cbte.FechaComp.ToString("yyyyMMdd")
-            Dim horaCbteStr As String = DateTime.Now.ToString("HHmmss")
-
-            ' 4. Armar el Encabezado por separado
-            Dim miEncabezado As New EncabezadoMensajeData() With {
-                .TipoMsj = 200,
-                .CodAccion = 290420,
-                .IdMsj = 1,
-                .InicioTrx = New InicioTrxData() With {
-                    .Fecha = fechaCbteStr,
-                    .Hora = horaCbteStr
-                },
-                .Software = New SoftwareData() With {
-                    .CodigoADESFA = "",
-                    .Nombre = "SiCoFa SRL",
-                    .Version = "1"
-                },
-                .Prestador = New PrestadorData() With {
-                    .GLN = If(cbte.Empresa.GLN IsNot Nothing, cbte.Empresa.GLN.ToString().Trim(), ""),
-                    .CodigoImed = 98734563271L,
-                    .Cuit = If(IsNumeric(cbte.Empresa.CUIT), Convert.ToInt64(cbte.Empresa.CUIT.Replace("-", "")), 0L),
-                    .CUFE = If(cbte.Empresa.CUFE IsNot Nothing, cbte.Empresa.CUFE.ToString().Trim(), "")
-                }
-            }
-
-            ' 5. Armar el Comprobante usando directamente las propiedades
-            Dim miComprobante As New ComprobanteData() With {
-                .Id = objOpera.IdOperacion,
-                .PtoVenta = If(Not String.IsNullOrEmpty(cbte.PuntoVta), Convert.ToInt32(cbte.PuntoVta), 0),
-                .TipoComprobanteARCA = If(cbte.TipoComprobante IsNot Nothing, Convert.ToInt32(cbte.TipoComprobante.TipoComprobante), 0),
-                .Fecha = fechaCbteStr,
-                .Hora = horaCbteStr,
-                .Tipo = "V",
-                .Fiscal = "E",
-                .CAE = If(cbte.CAE IsNot Nothing AndAlso Not String.IsNullOrEmpty(cbte.CAE.NumCAE), Convert.ToInt64(cbte.CAE.NumCAE), 0L),
-                .ImporteTotal = cbte.ImpBto,
-                .TipoDocumento = cbte.Cliente.CodiTD_AFIP,
-                .NroDocumento = If(IsNumeric(cbte.Cliente.NumDoc), Convert.ToInt64(cbte.Cliente.NumDoc), 0L),
-                .PersonaRetiro = New PersonaRetiroData() With {
-                    .TipoDocumentoR = cbte.Cliente.CodiTD_AFIP,
-                    .NroDocumentoR = If(IsNumeric(cbte.Cliente.NumDoc), Convert.ToInt64(cbte.Cliente.NumDoc), 0L),
-                    .FechaNacimientoR = "19850412",
-                    .SexoR = "F"
-                }
-            }
-
-            ' 6. Recorrer el detalle de la venta (cbte.Detalle) para armar la lista DatosVentas
-            Dim listaVentas As New List(Of VentaItemData)()
-            If cbte.Detalle IsNot Nothing Then
-                Dim nroOrdenItem As Integer = 1
-                For Each det In cbte.Detalle
-                    Dim itemVentaData As New VentaItemData() With {
-                        .Item = New ItemContenidoData() With {
-                            .NroOrden = nroOrdenItem,
-                            .ItemVenta = New ItemVentaData() With {
-                                .OrdenItemVenta = nroOrdenItem,
-                                .NroReferenciaSGF = objOpera.IdOperacion.ToString(),
-                                .CodBarras = 0L,
-                                .CapturaCodBarras = "E",
-                                .CodTroquel = 0L,
-                                .Alfabeta = 0,
-                                .Descripcion = "Artículo de Venta",
-                                .CantidadVenta = 1,
-                                .ImporteUnitario = 0D
-                            },
-                            .Validador = New ValidadorData() With {
-                                .CodigoADESFA = "A0030",
-                                .Nombre = "FARMALINK",
-                                .NroReferencia = "",
-                                .CantidadAprobada = 1
-                            }
-                        }
-                    }
-                    listaVentas.Add(itemVentaData)
-                    nroOrdenItem += 1
-                Next
-            End If
-
-            ' 7. Unir todo en el payload principal
-            Dim payload As New ImedPayload()
-            payload.MensajeImedSigedad = New MensajeImedSigedadData() With {
-                .MensajeImedSigedadVersion = "3.2.0",
-                .EncabezadoMensaje = miEncabezado,
-                .Comprobante = miComprobante,
-                .DatosVentas = listaVentas
-            }
-
-            ' 8. Serialización a JSON
-            Dim js As New JavaScriptSerializer()
-            Dim jsonPayload As String = js.Serialize(payload)
-
-            ' 9. Enviar por HTTP POST a IMED utilizando el Token JWT obtenido
-            Using client As New HttpClient()
-                client.DefaultRequestHeaders.Authorization = New AuthenticationHeaderValue("Bearer", tokenImed)
-                client.Timeout = TimeSpan.FromSeconds(20)
-
-                Dim content As New StringContent(jsonPayload, Encoding.UTF8, "application/json")
-                Dim response = client.PostAsync(urlImed, content).Result
-                Dim responseString = response.Content.ReadAsStringAsync().Result
-
-                If response.IsSuccessStatusCode Then
-                    Return True
-                Else
-                    RegistrarPendienteLocal(objOpera.IdOperacion, jsonPayload, responseString)
-                    Return False
-                End If
-            End Using
-
-        Catch ex As Exception
-            RegistrarErrorLocal(objOpera.IdOperacion, ex.Message)
-            Return False
-        End Try
     End Function
 
-    Private Sub RegistrarPendienteLocal(ByVal idOperacion As Long, ByVal jsonTrama As String, ByVal mensajeError As String)
+    Private Function ConstruirJsonDispensa(ByVal argOpera As Operacion, ByVal argCbte As Comprobante) As String
+        ' 1. Lista dinámica para agrupar todos los productos (ítems) del comprobante
+        Dim listaDatosVentas As New List(Of Object)
+        Dim nroOrden As Integer = 1
+
+        ' ATENCIÓN: Asumo que tu mobjCbte tiene una colección llamada "Detalles" o similar.
+        ' Debes recorrer la lista real de artículos facturados en ese comprobante.
+        For Each item In argCbte.Detalle ' <-- REEMPLAZAR por tu colección de ítems
+
+            Dim nodoItem = New With {
+                .NroOrden = nroOrden,
+                .ItemVenta = New With {
+                    .OrdenItemVenta = nroOrden,
+                    .NroReferenciaSGF = argCbte.NumComp.ToString(),
+                    .NroReferenciaSGFOrigen = Nothing,
+                    .CodBarras = "item.CodBarras", ' <-- Ajustar a tu entidad
+                    .CapturaCodBarras = "E", ' (E = Escáner, M = Manual)
+                    .CodTroquel = "item.Troquel", ' <-- Ajustar a tu entidad
+                    .Alfabeta = "item.Alfabeta", ' <-- Ajustar a tu entidad
+                    .Kairos = Nothing,
+                    .Codigo = Nothing,
+                    .IdProducto = Nothing,
+                    .Descripcion = item.Descripcion, ' <-- Ajustar a tu entidad
+                    .CantidadVenta = item.Cantidad, ' <-- Ajustar a tu entidad
+                    .ImporteUnitario = CDec(item.PUnit) ' <-- Ajustar a tu entidad
+            }}
+            ' Nodo de la Receta (Si la venta tiene validación de obra social)
+            '.RecetaDigital = New With {
+            '.Fecha = argCbte.FechaComp.ToString("yyyyMMdd"),
+            '.NroRecetaDigital = 8200228214670, ' <-- Variable con el Nro de Receta
+            '.NroReferenciaConsulta = "050923925253",
+            '.TipoPrescriptor = Nothing,
+            '.TipoMatricula = "P",
+            '.ProvinciaMatricula = "",
+            '.NroMatricula = 422, ' <-- Matrícula del médico
+            '.IdProductoSolicitado = Nothing,
+            '.AlfabetaSolicitado = Nothing,
+            '.DrogaCodigoSolicitado = Nothing,
+            '.CodDrogaSnomedSolicitado = Nothing,
+            '.DrogaDescripcionSolicitado = "DESCRIPCION",
+            '.CantidadSolicitado = item.Cantidad,
+            '.EstadoS'ugerido = 0,
+            '.Financiador = New With {
+            '.CodigoADESFA = Nothing,
+            '.Codigo = "41" ' <-- Código de la Obra Social
+            '}
+            '},
+            ' Nodo del Validador
+            '.Validador = New With {
+            '.CodigoADESFA = "A0030",
+            '.Nombre '= "FARMALINK", ' <-- Nombre del validador
+            '.NroRef'erencia = "20260625050940844500", ' <-- Transacción de validación
+            '.CantidadAprobada = item.Cantidad
+            '}
+            '}
+
+            listaDatosVentas.Add(New With {.Item = nodoItem})
+            nroOrden += 1
+        Next
+
+        ' 2. Armamos la estructura principal que envuelve todo
+        Dim estructuraPrincipal = New With {
+            .MensajeImedSigedad = New With {
+                .MensajeImedSigedadVersion = "3.2.0",
+                .EncabezadoMensaje = New With {
+                    .TipoMsj = 200,
+                    .CodAccion = 290420,
+                    .IdMsj = ObtenerIdMensaje(),
+                    .InicioTrx = New With {
+                        .Fecha = DateTime.Now.ToString("yyyyMMdd"),
+                        .Hora = DateTime.Now.ToString("HHmmss")
+                    },
+                    .Software = New With {
+                        .CodigoADESFA = "",
+                        .Nombre = "SiCoFa",
+                        .Version = "4.2.0"
+                    },
+                    .Prestador = New With {
+                        .CodigoADESFA = Nothing,
+                        .GLN = argCbte.Empresa.GLN,
+                        .CodigoImed = "argCbte.Empresa.ClaveIMED",
+                        .Cuit = CLng(argCbte.Empresa.CUIT.Replace("-", "")), ' Asegurar formato numérico
+                        .CUFE = argCbte.Empresa.CUFE
+                    }
+                },
+                .Comprobante = New With {
+                    .Id = argCbte.NumComp,
+                    .PtoVenta = CInt(argCbte.PuntoVta),
+                    .TipoComprobanteARCA = CInt(argCbte.TipoComprobante.CodiTC_AFIP),
+                    .Fecha = argOpera.Fin.ToString("yyyyMMdd"),
+                    .Hora = argOpera.Fin.ToString("HHmmss"),
+                    .Tipo = "V",
+                    .Fiscal = "E",
+                    .CAE = argCbte.CAE.NumCAE,
+                    .ImporteTotal = CDec(argCbte.ImpBto),
+                    .TipoDocumento = argCbte.Cliente.CodiTD_AFIP,
+                    .NroDocumento = CLng(argCbte.Cliente.NumDoc.Replace("-", "")),
+                    .PersonaRetiro = New With {
+                        .TipoDocumentoR = 96,
+                        .NroDocumentoR = 30444555,
+                        .FechaNacimientoR = "19850412",
+                        .SexoR = "F",
+                        .LecturaDNI = "00512345690@PEREZ@MARIA LAURA@F@30444555@B@12/04/1991@15/03/2021@274"
+                    } ' <-- Si no hay retiro, podrías igualarlo a Nothing según lo que exija IMED
+                },
+                .DatosVentas = listaDatosVentas
+            }
+        }
+
+        ' 3. Convertimos todo a formato JSON
+        Dim serializer As New JavaScriptSerializer()
+        Return serializer.Serialize(estructuraPrincipal)
+    End Function
+
+    Private Sub EnviarDeclaracionAlServidor(ByVal jsonPayload As String, ByVal token As String, ByVal esHomologacion As Boolean)
+        Dim urlDispensa As String = If(esHomologacion, "https://homo.imed-sigedad.com/dispensa", "https://ingest.imed-sigedad.com/dispensa")
+
+        Using client As New HttpClient()
+            client.DefaultRequestHeaders.Clear()
+            client.DefaultRequestHeaders.Authorization = New Headers.AuthenticationHeaderValue("Bearer", token)
+            client.Timeout = TimeSpan.FromSeconds(20)
+
+            Dim content As New StringContent(jsonPayload, System.Text.Encoding.UTF8, "application/json")
+            Dim response = client.PostAsync(urlDispensa, content).Result
+
+            If Not response.IsSuccessStatusCode Then
+                Dim errorDetalle As String = response.Content.ReadAsStringAsync().Result
+                Throw New Exception("Rechazo de IMED: " & errorDetalle)
+            End If
+        End Using
     End Sub
 
-    Private Sub RegistrarErrorLocal(ByVal idOperacion As Long, ByVal mensajeError As String)
-    End Sub
-
-End Class
-
-' Excepción personalizada para evitar filtrar claves en logs de error
-Public Class ErrorImedException
-    Inherits Exception
-    Public Sub New(message As String)
-        MyBase.New(message)
-    End Sub
 End Class
