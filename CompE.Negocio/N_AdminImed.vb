@@ -99,13 +99,12 @@ Public Class N_AdminIMED
     End Function
 
     Private Function ConstruirJsonDispensa(ByVal argOpera As Operacion, ByVal argCbte As Comprobante) As String
-        ' 1. Lista dinámica para agrupar todos los productos (ítems) del comprobante
+        Dim adminRtas As New D_AdminRtas
+        Dim receta As Receta = adminRtas.ObtenerRecetaPorIdOperacion(argOpera.IdOperacion)
         Dim listaDatosVentas As New List(Of Object)
         Dim nroOrden As Integer = 1
 
-        ' ATENCIÓN: Asumo que tu mobjCbte tiene una colección llamada "Detalles" o similar.
-        ' Debes recorrer la lista real de artículos facturados en ese comprobante.
-        For Each item In argCbte.Detalle ' <-- REEMPLAZAR por tu colección de ítems
+        For Each item In argCbte.Detalle
 
             Dim nodoItem = New With {
                 .NroOrden = nroOrden,
@@ -113,46 +112,44 @@ Public Class N_AdminIMED
                     .OrdenItemVenta = nroOrden,
                     .NroReferenciaSGF = argCbte.NumComp.ToString(),
                     .NroReferenciaSGFOrigen = Nothing,
-                    .CodBarras = "item.CodBarras", ' <-- Ajustar a tu entidad
-                    .CapturaCodBarras = "E", ' (E = Escáner, M = Manual)
-                    .CodTroquel = "item.Troquel", ' <-- Ajustar a tu entidad
-                    .Alfabeta = "item.Alfabeta", ' <-- Ajustar a tu entidad
+                    .CodBarras = Nothing,
+                    .CapturaCodBarras = "E",
+                    .CodTroquel = Nothing,
+                    .Alfabeta = Nothing,
                     .Kairos = Nothing,
                     .Codigo = Nothing,
                     .IdProducto = Nothing,
-                    .Descripcion = item.Descripcion, ' <-- Ajustar a tu entidad
-                    .CantidadVenta = item.Cantidad, ' <-- Ajustar a tu entidad
-                    .ImporteUnitario = CDec(item.PUnit) ' <-- Ajustar a tu entidad
-            }}
-            ' Nodo de la Receta (Si la venta tiene validación de obra social)
-            '.RecetaDigital = New With {
-            '.Fecha = argCbte.FechaComp.ToString("yyyyMMdd"),
-            '.NroRecetaDigital = 8200228214670, ' <-- Variable con el Nro de Receta
-            '.NroReferenciaConsulta = "050923925253",
-            '.TipoPrescriptor = Nothing,
-            '.TipoMatricula = "P",
-            '.ProvinciaMatricula = "",
-            '.NroMatricula = 422, ' <-- Matrícula del médico
-            '.IdProductoSolicitado = Nothing,
-            '.AlfabetaSolicitado = Nothing,
-            '.DrogaCodigoSolicitado = Nothing,
-            '.CodDrogaSnomedSolicitado = Nothing,
-            '.DrogaDescripcionSolicitado = "DESCRIPCION",
-            '.CantidadSolicitado = item.Cantidad,
-            '.EstadoS'ugerido = 0,
-            '.Financiador = New With {
-            '.CodigoADESFA = Nothing,
-            '.Codigo = "41" ' <-- Código de la Obra Social
-            '}
-            '},
-            ' Nodo del Validador
-            '.Validador = New With {
-            '.CodigoADESFA = "A0030",
-            '.Nombre '= "FARMALINK", ' <-- Nombre del validador
-            '.NroRef'erencia = "20260625050940844500", ' <-- Transacción de validación
-            '.CantidadAprobada = item.Cantidad
-            '}
-            '}
+                    .Descripcion = item.Descripcion,
+                    .CantidadVenta = item.Cantidad,
+                    .ImporteUnitario = CDec(item.PUnit)
+                },
+                .RecetaDigital = New With {
+                    .Fecha = argCbte.FechaComp.ToString("yyyyMMdd"),
+                    .NroRecetaDigital = receta.NumRta,
+                    .NroReferenciaConsulta = receta.NumConsulta,
+                    .TipoPrescriptor = receta.TipoPrescriptor,
+                    .TipoMatricula = receta.TipoMatricula,
+                    .ProvinciaMatricula = receta.Provincia,
+                    .NroMatricula = receta.NumMatricula,
+                    .IdProductoSolicitado = Nothing,
+                    .AlfabetaSolicitado = Nothing,
+                    .DrogaCodigoSolicitado = Nothing,
+                    .CodDrogaSnomedSolicitado = Nothing,
+                    .DrogaDescripcionSolicitado = "DESCRIPCION",
+                    .CantidadSolicitado = item.Cantidad,
+                    .EstadoSugerido = 0,
+                    .Financiador = New With {
+                        .CodigoADESFA = Nothing,
+                        .Codigo = "41"
+                    }
+                },
+                .Validador = New With {
+                    .CodigoADESFA = "A0030",
+                    .Nombre = "FARMALINK",
+                    .NroReferencia = receta.NumAutorizacion, ' <-- ¡Acá faltaba la coma!
+                    .CantidadAprobada = item.Cantidad
+                }
+            }
 
             listaDatosVentas.Add(New With {.Item = nodoItem})
             nroOrden += 1

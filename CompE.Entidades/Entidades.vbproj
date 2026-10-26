@@ -70,7 +70,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CAE.vb" />
-    <Compile Include="ImedModelos.vb" />
     <Compile Include="Email.vb" />
     <Compile Include="Cliente.vb" />
     <Compile Include="Comprobante.vb" />
@@ -98,6 +97,7 @@
     <Compile Include="Operacion.vb" />
     <Compile Include="ParametrosTerminal.vb" />
     <Compile Include="QRCompE.vb" />
+    <Compile Include="Receta.vb" />
     <Compile Include="TipoComprobante.vb" />
     <Compile Include="FarmaPuntos.vb" />
   </ItemGroup>
