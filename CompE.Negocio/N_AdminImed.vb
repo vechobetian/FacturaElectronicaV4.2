@@ -9,15 +9,23 @@ Public Class N_AdminIMED
 
     Private Const ARCHIVO_TOKEN As String = "imed_token.txt"
     Private m_AdminDB As New D_AdminDB
+    Private m_NumPrestador As String
 
     Public Sub ProcesarDeclaracionDispensa(ByVal argOpera As Operacion, ByVal argCbte As Comprobante)
         Try
+            Dim filtros As New Dictionary(Of String, Object) From {
+                                                                    {"CodiAut", "SIGEDAD"}
+                                                                   }
+
+            Dim parametros = m_AdminDB.ObtenerRegistro("TblAutorizadores",, filtros)
+            Dim claveImed As String = parametros("Licencia").ToString
+            m_NumPrestador = parametros("NumPrestador").ToString
+
             ' 1. Definir entorno (Homologación o Producción según tu lógica de negocio)
             Dim esHomologacion As Boolean = True ' Cambiar a False cuando pasen a producción
 
             ' 2. Obtener credenciales desde la empresa u operación
             Dim glnFarmacia As String = argCbte.Empresa.GLN
-            Dim claveImed As String = "ClaveIMED"
 
             ' 3. Obtener el Token JWT vigente (reutiliza el txt o pide uno nuevo)
             Dim token As String = ObtenerTokenVigente(glnFarmacia, claveImed, esHomologacion)

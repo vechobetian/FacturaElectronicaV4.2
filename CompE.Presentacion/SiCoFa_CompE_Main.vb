@@ -13,9 +13,9 @@ Module SiCoFa_CompE_Main
 
     Public Sub Main(ByVal cmdArgs() As String)
 
-        Dim IdOpera As Long
-        Dim Hoja As String = ""
-        Dim NumCopias As Integer
+        Dim IdOpera As Long = 10
+        Dim Hoja As String = "TK"
+        Dim NumCopias As Integer = 1
         Dim Email As String = ""
 
         Try
@@ -66,6 +66,9 @@ Module SiCoFa_CompE_Main
                 Throw New Exception(Vecho.MensajeError("SiCoFa_CompE_Main", "Main", "Comprobante no encontrado"))
             End If
 
+            Dim adminImed As New N_AdminIMED()
+            adminImed.ProcesarDeclaracionDispensa(objOpera, mobjCbte)
+
             If mobjCbte.NumComp = "E" Then
                 If GenerarFacturaElectronica() = False Then
                     Exit Sub
@@ -74,8 +77,8 @@ Module SiCoFa_CompE_Main
                 mobjN_AdminCbtes.ActualizarComprobante(mobjCbte)
 
                 ' --- Integración con IMED ---
-                Dim adminImed As New N_AdminIMED()
-                adminImed.ProcesarDeclaracionDispensa(objOpera, mobjCbte)
+                'Dim adminImed As New N_AdminIMED()
+                'adminImed.ProcesarDeclaracionDispensa(objOpera, mobjCbte)
 
             Else
                 GenerarQR()
