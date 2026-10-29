@@ -101,6 +101,7 @@
     <Compile Include="Receta.vb" />
     <Compile Include="TipoComprobante.vb" />
     <Compile Include="FarmaPuntos.vb" />
+    <Compile Include="UnidadTrazable.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

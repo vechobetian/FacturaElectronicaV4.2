@@ -1,6 +1,7 @@
 ﻿Public Class Receta
     Public Property IdRta As Long
     Public Property IdOperacion As Long
+    Public Property Financiador As String
     Public Property FechaPresc As Date
     Public Property FechaDisp As Date
     Public Property NumRta As String
@@ -18,10 +19,12 @@
     Public Property NumAutorizacion As String
     Public Property EstadoRta As String
     Public Property NumConsulta As String
+    Public Property ItemsReceta As List(Of ItemReceta)
 
     Public Sub New(
                    argIdRta As Long,
                    argIdOperacion As Long,
+                   argFinanciador As String,
                    argFechaPresc As Date,
                    argFechaDip As Date,
                    argNumRta As String,
@@ -38,10 +41,12 @@
                    argImpAf As Decimal,
                    argNumAutorizacion As String,
                    argEstadoRta As String,
-                   argNumConsulta As String
+                   argNumConsulta As String,
+                   argItemsReceta As List(Of ItemReceta)
                    )
         Me.IdRta = argIdRta
         Me.IdOperacion = argIdOperacion
+        Me.Financiador = argFinanciador
         Me.FechaPresc = argFechaPresc
         Me.FechaDisp = argFechaDip
         Me.NumRta = argNumRta
@@ -59,5 +64,6 @@
         Me.NumAutorizacion = argNumAutorizacion
         Me.EstadoRta = argEstadoRta
         Me.NumConsulta = argNumConsulta
+        Me.ItemsReceta = argItemsReceta
     End Sub
 End Class

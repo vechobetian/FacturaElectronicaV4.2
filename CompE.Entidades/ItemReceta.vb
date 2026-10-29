@@ -11,6 +11,7 @@
     Public Property Estado As Integer
     Public Property Alfabeta As Integer
     Public Property CodBarras As String
+    Public Property UnidadesTrazables As List(Of UnidadTrazable)
 
     Public Sub New(argIdDP As Long,
                    argIdRta As Long,
@@ -23,7 +24,9 @@
                    argCantPrescripta As Integer,
                    argEstado As Integer,
                    argAlfabeta As Integer,
-                   argCodBarras As String)
+                   argCodBarras As String,
+                   Optional argUnidadesTrazables As List(Of UnidadTrazable) = Nothing
+                   )
 
         Me.IdDP = argIdDP
         Me.IdRta = argIdRta
@@ -37,6 +40,7 @@
         Me.Estado = argEstado
         Me.Alfabeta = argAlfabeta
         Me.CodBarras = argCodBarras
+        Me.UnidadesTrazables = If(argUnidadesTrazables, New List(Of UnidadTrazable)())
     End Sub
 
 End Class

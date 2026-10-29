@@ -1,4 +1,5 @@
-﻿Imports System.IO
+﻿Imports System.Collections.Generic
+Imports System.IO
 Imports System.Net
 Imports System.Net.Http
 Imports System.Web.Script.Serialization
@@ -9,20 +10,20 @@ Public Class N_AdminIMED
 
     Private Const ARCHIVO_TOKEN As String = "imed_token.txt"
     Private m_AdminDB As New D_AdminDB
-    Private m_NumPrestador As String
+    Private m_NumPrestadorSIGEDAD As String
 
     Public Sub ProcesarDeclaracionDispensa(ByVal argOpera As Operacion, ByVal argCbte As Comprobante)
         Try
             Dim filtros As New Dictionary(Of String, Object) From {
-                                                                    {"CodiAut", "SIGEDAD"}
-                                                                   }
+                {"CodiAut", "SIGEDAD"}
+            }
 
             Dim parametros = m_AdminDB.ObtenerRegistro("TblAutorizadores",, filtros)
             Dim claveImed As String = parametros("Licencia").ToString
-            m_NumPrestador = parametros("NumPrestador").ToString
+            m_NumPrestadorSIGEDAD = parametros("NumPrestador").ToString
 
-            ' 1. Definir entorno (Homologación o Producción según tu lógica de negocio)
-            Dim esHomologacion As Boolean = True ' Cambiar a False cuando pasen a producción
+            ' 1. Definir entorno (Homologación o Producción)
+            Dim esHomologacion As Boolean = True ' Cambiar a False en producción
 
             ' 2. Obtener credenciales desde la empresa u operación
             Dim glnFarmacia As String = argCbte.Empresa.GLN
@@ -30,7 +31,7 @@ Public Class N_AdminIMED
             ' 3. Obtener el Token JWT vigente (reutiliza el txt o pide uno nuevo)
             Dim token As String = ObtenerTokenVigente(glnFarmacia, claveImed, esHomologacion)
 
-            ' 4. Armar el payload con los datos de la receta/dispensa
+            ' 4. Armar el payload JSON con trazabilidad
             Dim jsonPayload As String = ConstruirJsonDispensa(argOpera, argCbte)
 
             ' 5. Enviar la declaración a la API de IMED
@@ -46,7 +47,6 @@ Public Class N_AdminIMED
 
         ' 1. Verificar si el archivo del token existe en el servidor
         If File.Exists(rutaToken) Then
-            ' Margen de seguridad de 7 horas (el token dura 8)
             Dim fechaCreacion As DateTime = File.GetLastWriteTime(rutaToken)
             If DateTime.Now.Subtract(fechaCreacion).TotalHours < 7.0 Then
                 Dim tokenGuardado As String = File.ReadAllText(rutaToken).Trim()
@@ -59,7 +59,7 @@ Public Class N_AdminIMED
         ' 2. Si no existe o expiró, lo solicitamos a la API de IMED
         Dim nuevoToken As String = SolicitarTokenNuevoAlServidor(gln, clave, esHomologacion)
 
-        ' 3. Guardamos el nuevo token en el archivo txt del servidor
+        ' 3. Guardamos el nuevo token
         Dim carpetaDestino As String = Path.GetDirectoryName(rutaToken)
         If Not Directory.Exists(carpetaDestino) Then
             Directory.CreateDirectory(carpetaDestino)
@@ -70,7 +70,6 @@ Public Class N_AdminIMED
     End Function
 
     Private Function ObtenerRutaToken() As String
-        ' Utiliza la función centralizada de Vecho para leer la ruta desde la RAM
         Dim pathServidor As String = Vecho.ObtenerPathServidor()
         Return Path.Combine(pathServidor, "SiCoFa_Server\CompE", ARCHIVO_TOKEN)
     End Function
@@ -96,14 +95,10 @@ Public Class N_AdminIMED
     End Function
 
     Private Function ObtenerIdMensaje() As Long
-
         Dim filtros As New Dictionary(Of String, Object) From {
-                                                               {"CodiAut", "SIGEDAD"}
-                                                              }
-
-        ' Hace la lectura y la actualización en una sola operación segura
+            {"CodiAut", "SIGEDAD"}
+        }
         Return m_AdminDB.IncrementarYObtenerContador("TblAutorizadores", "UltiNumFil", filtros)
-
     End Function
 
     Private Function ConstruirJsonDispensa(ByVal argOpera As Operacion, ByVal argCbte As Comprobante) As String
@@ -112,27 +107,52 @@ Public Class N_AdminIMED
         Dim listaDatosVentas As New List(Of Object)
         Dim nroOrden As Integer = 1
 
-        For Each item In argCbte.Detalle
+        For Each item As ItemReceta In receta.ItemsReceta
+            Dim alfabetataSolicitado As String = ""
 
+            If item.Estado = 1 Then
+                alfabetataSolicitado = item.Alfabeta.ToString()
+            End If
+
+            ' 1. Armamos ItemVenta en un Dictionary para poder adjuntar UnidadesTrazables dinámicamente
+            Dim itemVentaDict As New Dictionary(Of String, Object) From {
+                {"OrdenItemVenta", nroOrden},
+                {"NroReferenciaSGF", argOpera.IdOperacion},
+                {"NroReferenciaSGFOrigen", Nothing},
+                {"CodBarras", If(IsNumeric(item.CodBarras), CLng(item.CodBarras), item.CodBarras)},
+                {"CapturaCodBarras", "E"},
+                {"CodTroquel", Nothing},
+                {"Alfabeta", item.Alfabeta},
+                {"Kairos", Nothing},
+                {"Codigo", Nothing},
+                {"IdProducto", Nothing},
+                {"Descripcion", item.Descripcion},
+                {"CantidadVenta", item.Cant},
+                {"ImporteUnitario", CDec(item.PrecioUnit)}
+            }
+
+            ' 2. Mapeamos directamente la lista de objetos UnidadTrazable de ItemReceta
+            If item.UnidadesTrazables IsNot Nothing AndAlso item.UnidadesTrazables.Count > 0 Then
+                Dim listaJsonTrazables As New List(Of Object)
+
+                For Each ut As UnidadTrazable In item.UnidadesTrazables
+                    listaJsonTrazables.Add(New With {
+                        .GTIN = ut.Gtin.Trim().PadLeft(14, "0"c),
+                        .NroSerie = ut.Serial.Trim(),
+                        .NroLote = If(Not String.IsNullOrEmpty(ut.Lote), ut.Lote.Trim(), "S/L"),
+                        .FechaVencimiento = If(ut.Vencimiento <> Date.MinValue, ut.Vencimiento.ToString("yyyyMMdd"), DateTime.Now.ToString("yyyyMMdd"))
+                    })
+                Next
+
+                itemVentaDict.Add("UnidadesTrazables", listaJsonTrazables)
+            End If
+
+            ' 3. Estructura interna del nodo Item
             Dim nodoItem = New With {
                 .NroOrden = nroOrden,
-                .ItemVenta = New With {
-                    .OrdenItemVenta = nroOrden,
-                    .NroReferenciaSGF = argCbte.NumComp.ToString(),
-                    .NroReferenciaSGFOrigen = Nothing,
-                    .CodBarras = Nothing,
-                    .CapturaCodBarras = "E",
-                    .CodTroquel = Nothing,
-                    .Alfabeta = Nothing,
-                    .Kairos = Nothing,
-                    .Codigo = Nothing,
-                    .IdProducto = Nothing,
-                    .Descripcion = item.Descripcion,
-                    .CantidadVenta = item.Cantidad,
-                    .ImporteUnitario = CDec(item.PUnit)
-                },
+                .ItemVenta = itemVentaDict,
                 .RecetaDigital = New With {
-                    .Fecha = argCbte.FechaComp.ToString("yyyyMMdd"),
+                    .Fecha = receta.FechaPresc.ToString("yyyyMMdd"),
                     .NroRecetaDigital = receta.NumRta,
                     .NroReferenciaConsulta = receta.NumConsulta,
                     .TipoPrescriptor = receta.TipoPrescriptor,
@@ -140,22 +160,22 @@ Public Class N_AdminIMED
                     .ProvinciaMatricula = receta.Provincia,
                     .NroMatricula = receta.NumMatricula,
                     .IdProductoSolicitado = Nothing,
-                    .AlfabetaSolicitado = Nothing,
+                    .AlfabetaSolicitado = alfabetataSolicitado,
                     .DrogaCodigoSolicitado = Nothing,
                     .CodDrogaSnomedSolicitado = Nothing,
-                    .DrogaDescripcionSolicitado = "DESCRIPCION",
-                    .CantidadSolicitado = item.Cantidad,
-                    .EstadoSugerido = 0,
+                    .DrogaDescripcionSolicitado = Nothing,
+                    .CantidadSolicitado = item.CantPrescripta,
+                    .EstadoSugerido = item.Estado,
                     .Financiador = New With {
                         .CodigoADESFA = Nothing,
-                        .Codigo = "41"
+                        .Codigo = receta.Financiador
                     }
                 },
                 .Validador = New With {
                     .CodigoADESFA = "A0030",
                     .Nombre = "FARMALINK",
-                    .NroReferencia = receta.NumAutorizacion, ' <-- ¡Acá faltaba la coma!
-                    .CantidadAprobada = item.Cantidad
+                    .NroReferencia = If(Not String.IsNullOrEmpty(item.NumAutorItem), item.NumAutorItem, receta.NumAutorizacion),
+                    .CantidadAprobada = item.Cant
                 }
             }
 
@@ -163,7 +183,7 @@ Public Class N_AdminIMED
             nroOrden += 1
         Next
 
-        ' 2. Armamos la estructura principal que envuelve todo
+        ' 4. Estructura principal completa
         Dim estructuraPrincipal = New With {
             .MensajeImedSigedad = New With {
                 .MensajeImedSigedadVersion = "3.2.0",
@@ -183,13 +203,13 @@ Public Class N_AdminIMED
                     .Prestador = New With {
                         .CodigoADESFA = Nothing,
                         .GLN = argCbte.Empresa.GLN,
-                        .CodigoImed = "argCbte.Empresa.ClaveIMED",
-                        .Cuit = CLng(argCbte.Empresa.CUIT.Replace("-", "")), ' Asegurar formato numérico
+                        .CodigoImed = m_NumPrestadorSIGEDAD,
+                        .Cuit = CLng(argCbte.Empresa.CUIT.Replace("-", "")),
                         .CUFE = argCbte.Empresa.CUFE
                     }
                 },
                 .Comprobante = New With {
-                    .Id = argCbte.NumComp,
+                    .Id = CLng(argCbte.NumComp),
                     .PtoVenta = CInt(argCbte.PuntoVta),
                     .TipoComprobanteARCA = CInt(argCbte.TipoComprobante.CodiTC_AFIP),
                     .Fecha = argOpera.Fin.ToString("yyyyMMdd"),
@@ -202,17 +222,16 @@ Public Class N_AdminIMED
                     .NroDocumento = CLng(argCbte.Cliente.NumDoc.Replace("-", "")),
                     .PersonaRetiro = New With {
                         .TipoDocumentoR = 96,
-                        .NroDocumentoR = 30444555,
+                        .NroDocumentoR = CLng(argCbte.Cliente.NumDoc.Replace("-", "")),
                         .FechaNacimientoR = "19850412",
                         .SexoR = "F",
-                        .LecturaDNI = "00512345690@PEREZ@MARIA LAURA@F@30444555@B@12/04/1991@15/03/2021@274"
-                    } ' <-- Si no hay retiro, podrías igualarlo a Nothing según lo que exija IMED
+                        .LecturaDNI = ""
+                    }
                 },
                 .DatosVentas = listaDatosVentas
             }
         }
 
-        ' 3. Convertimos todo a formato JSON
         Dim serializer As New JavaScriptSerializer()
         Return serializer.Serialize(estructuraPrincipal)
     End Function
