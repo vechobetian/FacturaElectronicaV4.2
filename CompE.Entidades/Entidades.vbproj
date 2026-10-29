@@ -77,6 +77,7 @@
     <Compile Include="ItemComprobante.vb" />
     <Compile Include="Empresa.vb" />
     <Compile Include="ItemComprobanteRecetas.vb" />
+    <Compile Include="ItemReceta.vb" />
     <Compile Include="LoginTicket.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
