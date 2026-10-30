@@ -13,7 +13,7 @@ Module SiCoFa_CompE_Main
 
     Public Sub Main(ByVal cmdArgs() As String)
 
-        Dim IdOpera As Long = 10
+        Dim IdOpera As Long = 33
         Dim Hoja As String = "TK"
         Dim NumCopias As Integer = 1
         Dim Email As String = ""

@@ -15,7 +15,7 @@ Public Class N_AdminIMED
     Public Sub ProcesarDeclaracionDispensa(ByVal argOpera As Operacion, ByVal argCbte As Comprobante)
         Try
             Dim filtros As New Dictionary(Of String, Object) From {
-                {"CodiAut", "SIGEDAD"}
+                {"CodiAut", "HPAMI"}
             }
 
             Dim parametros = m_AdminDB.ObtenerRegistro("TblAutorizadores",, filtros)
@@ -34,6 +34,21 @@ Public Class N_AdminIMED
             ' 4. Armar el payload JSON con trazabilidad
             Dim jsonPayload As String = ConstruirJsonDispensa(argOpera, argCbte)
 
+            ' ------------------------------------------------------------------
+            ' 4.1. Guardar el JSON localmente antes de enviar
+            ' ------------------------------------------------------------------
+            Dim carpetaLogs As String = IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LogsJSON")
+            If Not IO.Directory.Exists(carpetaLogs) Then
+                IO.Directory.CreateDirectory(carpetaLogs)
+            End If
+
+            ' Generar un nombre único con timestamp y/o identificador de comprobante
+            Dim nombreArchivo As String = String.Format("Dispensa_{0}.json", DateTime.Now.ToString("yyyyMMdd_HHmmss_fff"))
+            Dim rutaCompleta As String = IO.Path.Combine(carpetaLogs, nombreArchivo)
+
+            IO.File.WriteAllText(rutaCompleta, jsonPayload, System.Text.Encoding.UTF8)
+
+            ' ------------------------------------------------------------------
             ' 5. Enviar la declaración a la API de IMED
             EnviarDeclaracionAlServidor(jsonPayload, token, esHomologacion)
 
@@ -96,9 +111,11 @@ Public Class N_AdminIMED
 
     Private Function ObtenerIdMensaje() As Long
         Dim filtros As New Dictionary(Of String, Object) From {
-            {"CodiAut", "SIGEDAD"}
+            {"CodiAut", "HPAMI"}
         }
-        Return m_AdminDB.IncrementarYObtenerContador("TblAutorizadores", "UltiNumFil", filtros)
+        Dim id As Long = m_AdminDB.IncrementarYObtenerContador("TblAutorizadores", "UltiNumFil", filtros)
+        ' SIGEDAD exige que el IdMsj sea mayor o igual a 1
+        Return If(id < 1, 1, id)
     End Function
 
     Private Function ConstruirJsonDispensa(ByVal argOpera As Operacion, ByVal argCbte As Comprobante) As String
@@ -108,27 +125,27 @@ Public Class N_AdminIMED
         Dim nroOrden As Integer = 1
 
         For Each item As ItemReceta In receta.ItemsReceta
-            Dim alfabetataSolicitado As String = ""
-
-            If item.Estado = 1 Then
-                alfabetataSolicitado = item.Alfabeta.ToString()
+            ' Debe ser tipo numérico (Integer) o Nothing si no aplica, para evitar ser emitido como texto "21"
+            Dim alfabetaSolicitado As Object = Nothing
+            If item.Estado = 1 AndAlso IsNumeric(item.Alfabeta) Then
+                alfabetaSolicitado = CInt(item.Alfabeta)
             End If
 
             ' 1. Armamos ItemVenta en un Dictionary para poder adjuntar UnidadesTrazables dinámicamente
             Dim itemVentaDict As New Dictionary(Of String, Object) From {
                 {"OrdenItemVenta", nroOrden},
-                {"NroReferenciaSGF", argOpera.IdOperacion},
+                {"NroReferenciaSGF", argOpera.IdOperacion.ToString()}, ' SIGEDAD exige VARCHAR (debe ir con comillas)
                 {"NroReferenciaSGFOrigen", Nothing},
                 {"CodBarras", If(IsNumeric(item.CodBarras), CLng(item.CodBarras), item.CodBarras)},
                 {"CapturaCodBarras", "E"},
                 {"CodTroquel", Nothing},
-                {"Alfabeta", item.Alfabeta},
+                {"Alfabeta", CInt(item.Alfabeta)},
                 {"Kairos", Nothing},
                 {"Codigo", Nothing},
                 {"IdProducto", Nothing},
                 {"Descripcion", item.Descripcion},
-                {"CantidadVenta", item.Cant},
-                {"ImporteUnitario", CDec(item.PrecioUnit)}
+                {"CantidadVenta", CInt(item.Cant)},
+                {"ImporteUnitario", Math.Round(CDec(item.PrecioUnit), 2)} ' Forzado a 2 decimales
             }
 
             ' 2. Mapeamos directamente la lista de objetos UnidadTrazable de ItemReceta
@@ -153,19 +170,19 @@ Public Class N_AdminIMED
                 .ItemVenta = itemVentaDict,
                 .RecetaDigital = New With {
                     .Fecha = receta.FechaPresc.ToString("yyyyMMdd"),
-                    .NroRecetaDigital = receta.NumRta,
+                    .NroRecetaDigital = If(IsNumeric(receta.NumRta), CLng(receta.NumRta), 0L), ' Debe ser NUM
                     .NroReferenciaConsulta = receta.NumConsulta,
                     .TipoPrescriptor = receta.TipoPrescriptor,
                     .TipoMatricula = receta.TipoMatricula,
                     .ProvinciaMatricula = receta.Provincia,
-                    .NroMatricula = receta.NumMatricula,
+                    .NroMatricula = If(IsNumeric(receta.NumMatricula), CInt(receta.NumMatricula), 0), ' Debe ser NUM
                     .IdProductoSolicitado = Nothing,
-                    .AlfabetaSolicitado = alfabetataSolicitado,
+                    .AlfabetaSolicitado = alfabetaSolicitado, ' Debe ser NUM
                     .DrogaCodigoSolicitado = Nothing,
                     .CodDrogaSnomedSolicitado = Nothing,
                     .DrogaDescripcionSolicitado = Nothing,
-                    .CantidadSolicitado = item.CantPrescripta,
-                    .EstadoSugerido = item.Estado,
+                    .CantidadSolicitado = CInt(item.CantPrescripta),
+                    .EstadoSugerido = CInt(item.Estado),
                     .Financiador = New With {
                         .CodigoADESFA = Nothing,
                         .Codigo = receta.Financiador
@@ -175,7 +192,7 @@ Public Class N_AdminIMED
                     .CodigoADESFA = "A0030",
                     .Nombre = "FARMALINK",
                     .NroReferencia = If(Not String.IsNullOrEmpty(item.NumAutorItem), item.NumAutorItem, receta.NumAutorizacion),
-                    .CantidadAprobada = item.Cant
+                    .CantidadAprobada = CInt(item.Cant)
                 }
             }
 
@@ -190,7 +207,7 @@ Public Class N_AdminIMED
                 .EncabezadoMensaje = New With {
                     .TipoMsj = 200,
                     .CodAccion = 290420,
-                    .IdMsj = ObtenerIdMensaje(),
+                    .IdMsj = ObtenerIdMensaje(), ' Garantiza >= 1
                     .InicioTrx = New With {
                         .Fecha = DateTime.Now.ToString("yyyyMMdd"),
                         .Hora = DateTime.Now.ToString("HHmmss")
@@ -201,11 +218,11 @@ Public Class N_AdminIMED
                         .Version = "4.2.0"
                     },
                     .Prestador = New With {
-                        .CodigoADESFA = Nothing,
-                        .GLN = argCbte.Empresa.GLN,
-                        .CodigoImed = m_NumPrestadorSIGEDAD,
+                        .CodigoADESFA = CType(Nothing, String),
+                        .GLN = If(IsNumeric(argCbte.Empresa.GLN), CLng(argCbte.Empresa.GLN), 0L), ' Debe ser NUM
+                        .CodigoImed = If(IsNumeric(m_NumPrestadorSIGEDAD), CLng(m_NumPrestadorSIGEDAD), 0L), ' Debe ser NUM
                         .Cuit = CLng(argCbte.Empresa.CUIT.Replace("-", "")),
-                        .CUFE = argCbte.Empresa.CUFE
+                        .CUFE = If(IsNumeric(argCbte.Empresa.CUFE), CLng(argCbte.Empresa.CUFE), 0L) ' Debe ser NUM
                     }
                 },
                 .Comprobante = New With {
@@ -216,9 +233,9 @@ Public Class N_AdminIMED
                     .Hora = argOpera.Fin.ToString("HHmmss"),
                     .Tipo = "V",
                     .Fiscal = "E",
-                    .CAE = argCbte.CAE.NumCAE,
-                    .ImporteTotal = CDec(argCbte.ImpBto),
-                    .TipoDocumento = argCbte.Cliente.CodiTD_AFIP,
+                    .CAE = If(IsNumeric(argCbte.CAE.NumCAE), CLng(argCbte.CAE.NumCAE), 0L), ' Debe ser NUM
+                    .ImporteTotal = Math.Round(CDec(argCbte.ImpBto), 2), ' Forzado a 2 decimales
+                    .TipoDocumento = CInt(argCbte.Cliente.CodiTD_AFIP),
                     .NroDocumento = CLng(argCbte.Cliente.NumDoc.Replace("-", "")),
                     .PersonaRetiro = New With {
                         .TipoDocumentoR = 96,

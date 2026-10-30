@@ -8,7 +8,7 @@ Public Class D_AdminRtas
         Try
             Dim objRta As Receta = Nothing
 
-            Dim sql As String = "SELECT * FROM TblRtas WHERE IdOperación=@IdOperacion"
+            Dim sql As String = "SELECT * FROM ConRtas WHERE IdOperación=@IdOperacion"
 
             Using cn As New SqlConnection(Mod_D_Admin.strConexionDB)
                 cn.Open()
@@ -24,7 +24,6 @@ Public Class D_AdminRtas
                         End If
 
                         Dim idRta As Long = If(IsDBNull(datos("IdRta")), 0L, Convert.ToInt64(datos("IdRta")))
-                        Dim idOpera As Long = If(IsDBNull(datos("IdOperacion")), 0L, Convert.ToInt64(datos("IdOperacion")))
                         Dim financiador As String = If(IsDBNull(datos("Financiador")), String.Empty, Convert.ToString(datos("Financiador")))
                         Dim fechaPresc As Date = If(IsDBNull(datos("FechaPresc")), Date.MinValue, Convert.ToDateTime(datos("FechaPresc")))
                         Dim fechaDisp As Date = If(IsDBNull(datos("FechaDisp")), Date.MinValue, Convert.ToDateTime(datos("FechaDisp")))
@@ -46,7 +45,7 @@ Public Class D_AdminRtas
 
                         Dim itemsRta As List(Of ItemReceta) = ObtenerItemsRta(idRta)
 
-                        objRta = New Receta(idRta, idOpera, financiador, fechaPresc, fechaDisp, numRta, tipoDoc, numDoc, numAf, nombreAf, tipoMatricula, provincia, numMatricula, tipoPrescriptor, impTotalRta, impOS, impAf, numAutorizacion, estadoRta, numConsulta, itemsRta)
+                        objRta = New Receta(idRta, argIdOperacion, financiador, fechaPresc, fechaDisp, numRta, tipoDoc, numDoc, numAf, nombreAf, tipoMatricula, provincia, numMatricula, tipoPrescriptor, impTotalRta, impOS, impAf, numAutorizacion, estadoRta, numConsulta, itemsRta)
 
                         Return objRta
                     End Using
