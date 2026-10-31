@@ -2,6 +2,7 @@
 Imports System.IO
 Imports System.Net
 Imports System.Net.Http
+Imports System.Text
 Imports System.Web.Script.Serialization
 Imports SiCoFa.Datos
 Imports SiCoFa.Entidades
@@ -19,7 +20,7 @@ Public Class N_AdminIMED
             }
 
             Dim parametros = m_AdminDB.ObtenerRegistro("TblAutorizadores",, filtros)
-            Dim claveImed As String = parametros("Licencia").ToString
+            Dim claveImed As String = "H6YuXr8xE85UDeNB" 'parametros("Licencia").ToString
             m_NumPrestadorSIGEDAD = parametros("NumPrestador").ToString
 
             ' 1. Definir entorno (Homologación o Producción)
@@ -98,15 +99,47 @@ Public Class N_AdminIMED
             client.DefaultRequestHeaders.Add("x-farma-key", clave)
             client.Timeout = TimeSpan.FromSeconds(15)
 
-            Dim response = client.GetAsync(urlToken).Result
+            Try
+                Dim response = client.GetAsync(urlToken).Result
+                Dim cuerpoRespuesta As String = response.Content.ReadAsStringAsync().Result
 
-            If response.IsSuccessStatusCode Then
-                Dim tokenJwt As String = response.Content.ReadAsStringAsync().Result
-                Return tokenJwt.Trim().Replace("""", "")
-            Else
-                Throw New Exception("Error de autenticación IMED. Código: " & CInt(response.StatusCode))
-            End If
+                If response.IsSuccessStatusCode Then
+                    Return cuerpoRespuesta.Trim().Replace("""", "")
+                Else
+                    ' Genera el archivo con el detalle exacto del error
+                    Dim rutaArchivoLog As String = GuardarRespuestaEnArchivo(urlToken, gln, response.StatusCode, cuerpoRespuesta)
+
+                    Throw New Exception($"Error de autenticación IMED ({CInt(response.StatusCode)}). Se generó el archivo de respuesta en: {rutaArchivoLog}")
+                End If
+            Catch ex As AggregateException
+                Dim redEx As Exception = If(ex.InnerException, ex)
+                Throw New Exception("Error de red o conexión con IMED: " & redEx.Message, redEx)
+            End Try
         End Using
+    End Function
+
+    Private Function GuardarRespuestaEnArchivo(ByVal url As String, ByVal gln As String, ByVal statusCode As Net.HttpStatusCode, ByVal contenido As String) As String
+        Try
+            ' Crea el nombre del archivo con timestamp para evitar sobreescrituras
+            Dim nombreArchivo As String = $"imed_response_{DateTime.Now:yyyyMMdd_HHmmss}.txt"
+            Dim rutaCompleta As String = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, nombreArchivo)
+
+            Dim sb As New StringBuilder()
+            sb.AppendLine("=== DETALLE DE RESPUESTA DE ERROR IMED ===")
+            sb.AppendLine($"Fecha/Hora: {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
+            sb.AppendLine($"URL del Endpoint: {url}")
+            sb.AppendLine($"x-farma-id (GLN): {gln}")
+            sb.AppendLine($"Código Estado HTTP: {CInt(statusCode)} ({statusCode})")
+            sb.AppendLine("--------------------------------------------------")
+            sb.AppendLine("Cuerpo devuelto por el servidor:")
+            sb.AppendLine(If(String.IsNullOrWhiteSpace(contenido), "[Sin contenido en la respuesta]", contenido))
+            sb.AppendLine("==================================================")
+
+            File.WriteAllText(rutaCompleta, sb.ToString(), Encoding.UTF8)
+            Return rutaCompleta
+        Catch ex As Exception
+            Return "Error al intentar escribir el archivo: " & ex.Message
+        End Try
     End Function
 
     Private Function ObtenerIdMensaje() As Long
